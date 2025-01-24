@@ -1,11 +1,11 @@
 import os
-import sys
+
 from PIL import ImageFont
 
-from src.widgets.generic.w_table_generic import TableWidget
-from src.widgets.generic.w_charts_generic import BarChartWidget, PieChartWidget
-from src.utils.currency import PriceCurrency
 from src.utils.constants import RESOURCES_DIR
+from src.utils.currency import PriceCurrency
+from src.widgets.generic.w_charts_generic import BarChartWidget, PieChartWidget
+from src.widgets.generic.w_table_generic import TableWidget
 
 
 class PoolInfoTable(TableWidget):
@@ -73,9 +73,7 @@ class PoolStakeBarChart(BarChartWidget):
     ):
         self.datafetcher = datafetcher
         self.pool_id = pool_id
-        super().__init__(
-            size, [], [], background_color=background_color, font_size=font_size
-        )
+        super().__init__(size, [], [], background_color=background_color, font_size=font_size)
 
     def update(self):
         data = self.datafetcher.pool(self.pool_id)
@@ -89,9 +87,7 @@ class PoolStakeBarChart(BarChartWidget):
 
 
 class SupplyPieChartWidget(PieChartWidget):
-    def __init__(
-        self, data_fetcher, size, background_color=(0.3, 0.3, 0.3), font_size=20
-    ):
+    def __init__(self, data_fetcher, size, background_color=(0.3, 0.3, 0.3), font_size=20):
         super().__init__(size, [], [], background_color, font_size=font_size)
         self.data_fetcher = data_fetcher
 

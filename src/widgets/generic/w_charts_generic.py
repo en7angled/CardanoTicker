@@ -1,12 +1,12 @@
-from PIL import Image, ImageDraw, ImageFont
-from typing import Tuple, List
-
-from src.widgets.generic.w_abstract import AbstractWidget
-from src.utils.constants import RESOURCES_DIR
-
 import io
 import os
+from typing import List, Tuple
+
 import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw, ImageFont
+
+from src.utils.constants import RESOURCES_DIR
+from src.widgets.generic.w_abstract import AbstractWidget
 
 
 class BarChartWidget(AbstractWidget):
@@ -111,9 +111,7 @@ class PieChartWidget(AbstractWidget):
         labels, values = zip(*self.data)
         fig, ax = plt.subplots(figsize=(self.width / 100, self.height / 100))
         fig.set_facecolor(self._normalize_color(self.background_color))
-        ax.pie(
-            values, labels=labels, colors=self.colors, autopct="%1.1f%%", startangle=90
-        )
+        ax.pie(values, labels=labels, colors=self.colors, autopct="%1.1f%%", startangle=90)
         ax.axis("equal")
         # set slice text color
         # plt.setp(ax.pie(values, labels=labels, colors=self.colors, autopct='%1.1f%%', startangle=90)[1], size=20, color='white')

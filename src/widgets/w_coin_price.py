@@ -1,13 +1,13 @@
 import os
-from PIL import Image, ImageFont, ImageDraw
-from typing import Tuple, List
+from typing import List, Tuple
 
+from PIL import Image, ImageDraw, ImageFont
 
-from src.widgets.generic.w_abstract import AbstractWidget, ImageWidget
 from src.data_fetcher.data_fetcher import DataFetcher
-from src.utils.currency import PriceCurrency
 from src.utils.colors import Colors
 from src.utils.constants import RESOURCES_DIR
+from src.utils.currency import PriceCurrency
+from src.widgets.generic.w_abstract import AbstractWidget, ImageWidget
 
 
 class LogoBtc(ImageWidget):
@@ -162,9 +162,7 @@ class PriceWidget(AbstractWidget):
         # price_txt=price_txt.replace(" ", "#")
 
         # adjust the font size to fit the price
-        self.font = self.__load_adjusted_font(
-            price_txt + " " + self._currency.get_symbol(), self.font, self._size
-        )
+        self.font = self.__load_adjusted_font(price_txt + " " + self._currency.get_symbol(), self.font, self._size)
         self.font_size = self.font.size
 
         t_offset = (self.height - self.font_size) // 2
@@ -283,9 +281,7 @@ class PriceWithLogo(AbstractWidget):
         if nb_elements == 1:
             price_size = (size[0] - self.logo_size[0], size[1])
             self.price_widgets = {
-                prices[0][1]: PriceWidget(
-                    prices[0][0], price_size, prices[0][1], text_color, background_color
-                )
+                prices[0][1]: PriceWidget(prices[0][0], price_size, prices[0][1], text_color, background_color)
             }
             self.main_currency = prices[0][1]
         else:
@@ -302,9 +298,7 @@ class PriceWithLogo(AbstractWidget):
                         size[0] - self.logo_size[0],
                         size[1] // (nb_elements + 1),
                     )
-                self.price_widgets[currency] = PriceWidget(
-                    price, price_size, currency, text_color, background_color
-                )
+                self.price_widgets[currency] = PriceWidget(price, price_size, currency, text_color, background_color)
 
     def update(self, prices: List[Tuple[float, PriceCurrency]]):
         """
@@ -334,9 +328,7 @@ class PriceWithLogo(AbstractWidget):
         last_height = main_price_widget.height
         for currency, currency_widget in self.price_widgets.items():
             if currency != self.main_currency:
-                img_canvas.paste(
-                    currency_widget.get(), (self.logo_size[0], last_height)
-                )
+                img_canvas.paste(currency_widget.get(), (self.logo_size[0], last_height))
                 last_height += currency_widget.height
 
 
@@ -377,10 +369,7 @@ class CoinPriceWithLogo(PriceWithLogo):
 
     def update(self):
         symbol = self.get_symbol()
-        prices = [
-            (self.data_fetcher.get_realtime(symbol, c.value), c)
-            for c in self.price_widgets.keys()
-        ]
+        prices = [(self.data_fetcher.get_realtime(symbol, c.value), c) for c in self.price_widgets.keys()]
         return super().update(prices)
 
 

@@ -1,11 +1,59 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v3.2.0
     hooks:
-    -   id: check-yaml
-    -   id: end-of-file-fixer
     -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+        args: ["--allow-multiple-documents"]
+    -   id: check-toml
+    -   id: check-added-large-files
+        args: ["--maxkb=2100"]
+    -   id: debug-statements
+    -   id: check-merge-conflict
 -   repo: https://github.com/psf/black
     rev: 22.10.0
     hooks:
     -   id: black
+        args: ["--line-length=120", "--skip-string-normalization", "--target-version=py39"]
+# We are not ready yet to enforce type hints and static type checking
+# -   repo: https://github.com/pre-commit/mirrors-mypy
+#     rev: v1.1.1
+#     hooks:
+#     -   id: mypy
+#         args: ["--no-warn-unused-ignores"]
+-   repo: https://github.com/PyCQA/flake8
+    rev: 6.0.0
+    hooks:
+    -   id: flake8
+        args:
+            - "--ignore=E1,W1,E2,W2,E3,W3,E4,W4,E5,W5,E731"
+            - "--per-file-ignores=__init__.py: F401"
+-   repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: ["--profile=black", "multi_line_output=3", "line_length=120", "extend_skip=['doc']", "skip=/.harness/*"]
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.6.1
+    hooks:
+        - id: nbstripout
+-   repo: https://github.com/iterative/dvc
+    rev: 3.37.0
+    hooks:
+      - id: dvc-pre-commit
+        language_version: python3
+        stages:
+          - commit
+      - id: dvc-pre-push
+        additional_dependencies: ['.[s3]']
+        language_version: python3
+        stages:
+          - push
+      - always_run: true
+        id: dvc-post-checkout
+        language_version: python3
+        stages:
+          - post-checkout

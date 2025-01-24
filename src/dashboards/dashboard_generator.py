@@ -1,19 +1,19 @@
-from src.widgets.w_coin_price import (
-    BtcPriceWithLogo,
-    AdaPriceWithLogo,
-    EthPriceWithLogo,
-)
-from src.widgets.w_plot_chart import PlotChart
-from src.widgets.w_layout import WidgetLayout
-from src.widgets.w_pool import PoolStakeBarChart, PoolInfoTable, SupplyPieChartWidget
-from src.widgets.w_pool_history import AdaPoolHistWidget
-from src.widgets.generic.w_text import GenericTextWidget, DateTimeWidget, MutiTextWidget
+from src.utils.currency import currency_from_str
+from src.widgets.generic.w_text import DateTimeWidget, GenericTextWidget, MutiTextWidget
 from src.widgets.w_blockchain_stats import (
     BlockchainProgressWidget,
     BlockchainStatsTable,
     BlockchainTransactionsWidget,
 )
-from src.utils.currency import currency_from_str
+from src.widgets.w_coin_price import (
+    AdaPriceWithLogo,
+    BtcPriceWithLogo,
+    EthPriceWithLogo,
+)
+from src.widgets.w_layout import WidgetLayout
+from src.widgets.w_plot_chart import PlotChart
+from src.widgets.w_pool import PoolInfoTable, PoolStakeBarChart, SupplyPieChartWidget
+from src.widgets.w_pool_history import AdaPoolHistWidget
 
 
 class DashboardGenerator:
@@ -26,9 +26,7 @@ class DashboardGenerator:
         """
         data_fetcher = self.data_fetcher
         canvas_size = data["canvas_size"]
-        background_color = (
-            data["background_color"] if "background_color" in data else "white"
-        )
+        background_color = data["background_color"] if "background_color" in data else "white"
         layout = WidgetLayout(canvas_size, background_color=background_color)
 
         for widget_data in data["dashboard"]:
@@ -41,27 +39,15 @@ class DashboardGenerator:
 
             size = widget_data["size"]
             size = (int(size[0] * canvas_size[0]), int(size[1] * canvas_size[1]))
-            text_color = (
-                widget_data["text_color"] if "text_color" in widget_data else "black"
-            )
-            background_color = (
-                widget_data["background_color"]
-                if "background_color" in widget_data
-                else "white"
-            )
+            text_color = widget_data["text_color"] if "text_color" in widget_data else "black"
+            background_color = widget_data["background_color"] if "background_color" in widget_data else "white"
 
             if "data" in widget_data:
-                font_size = (
-                    widget_data["data"]["font_size"]
-                    if "font_size" in widget_data["data"]
-                    else 10
-                )
+                font_size = widget_data["data"]["font_size"] if "font_size" in widget_data["data"] else 10
 
             widget = None
             if widget_type == "ada_price":
-                currencies = [
-                    currency_from_str(c) for c in widget_data["data"]["currency"]
-                ]
+                currencies = [currency_from_str(c) for c in widget_data["data"]["currency"]]
                 widget = AdaPriceWithLogo(
                     data_fetcher,
                     size,
@@ -70,9 +56,7 @@ class DashboardGenerator:
                     text_color=text_color,
                 )
             elif widget_type == "btc_price":
-                currencies = [
-                    currency_from_str(c) for c in widget_data["data"]["currency"]
-                ]
+                currencies = [currency_from_str(c) for c in widget_data["data"]["currency"]]
                 widget = BtcPriceWithLogo(
                     data_fetcher,
                     size,
@@ -81,9 +65,7 @@ class DashboardGenerator:
                     text_color=text_color,
                 )
             elif widget_type == "eth_price":
-                currencies = [
-                    currency_from_str(c) for c in widget_data["data"]["currency"]
-                ]
+                currencies = [currency_from_str(c) for c in widget_data["data"]["currency"]]
                 widget = EthPriceWithLogo(
                     data_fetcher,
                     size,
@@ -92,16 +74,8 @@ class DashboardGenerator:
                     text_color=text_color,
                 )
             elif widget_type == "plot_chart":
-                inc_col = (
-                    widget_data["increasing_line_color"]
-                    if "increasing_line_color" in widget_data
-                    else "green"
-                )
-                dec_col = (
-                    widget_data["decreasing_line_color"]
-                    if "decreasing_line_color" in widget_data
-                    else "red"
-                )
+                inc_col = widget_data["increasing_line_color"] if "increasing_line_color" in widget_data else "green"
+                dec_col = widget_data["decreasing_line_color"] if "decreasing_line_color" in widget_data else "red"
 
                 widget = PlotChart(
                     data_fetcher,
@@ -113,9 +87,7 @@ class DashboardGenerator:
                     decreasing_line_color=dec_col,
                 )
             elif widget_type == "date_text":
-                widget = DateTimeWidget(
-                    size, text_color=text_color, background_color=background_color
-                )
+                widget = DateTimeWidget(size, text_color=text_color, background_color=background_color)
             elif widget_type == "pool_info_table":
                 widget = PoolInfoTable(
                     size,
@@ -171,11 +143,7 @@ class DashboardGenerator:
                     font_size=font_size,
                 )
             elif widget_type == "blockchain_stats_table":
-                header_color = (
-                    widget_data["data"]["header_color"]
-                    if "header_color" in widget_data["data"]
-                    else "black"
-                )
+                header_color = widget_data["data"]["header_color"] if "header_color" in widget_data["data"] else "black"
                 widget = BlockchainStatsTable(
                     data_fetcher,
                     size,

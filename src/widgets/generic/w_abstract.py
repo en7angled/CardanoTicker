@@ -1,6 +1,6 @@
-from enum import Enum
-from typing import List, Tuple
-from PIL import ImageColor, Image
+from typing import Tuple
+
+from PIL import Image, ImageColor
 
 from src.utils.colors import Colors
 

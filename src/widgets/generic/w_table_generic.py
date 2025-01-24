@@ -1,5 +1,6 @@
 from typing import List, Tuple
-from PIL import ImageFont, ImageDraw, ImageColor
+
+from PIL import ImageColor, ImageDraw, ImageFont
 
 from src.widgets.generic.w_abstract import AbstractWidget
 
@@ -66,9 +67,7 @@ class TableWidget(AbstractWidget):
                     outline="blue",
                     fill=self.background_color,
                 )
-                draw.text(
-                    (x + 10, y + 10), header, font=self.font, fill=self.header_color
-                )
+                draw.text((x + 10, y + 10), header, font=self.font, fill=self.header_color)
                 x += header_widths[i]
             y += row_height
 
@@ -81,9 +80,7 @@ class TableWidget(AbstractWidget):
                         outline="blue",
                         fill=self.background_color,
                     )
-                    draw.text(
-                        (x + 10, y + 10), cell, font=self.font, fill=self.row_color
-                    )
+                    draw.text((x + 10, y + 10), cell, font=self.font, fill=self.row_color)
                     x += header_widths[i]
                 y += row_height
 
@@ -97,9 +94,7 @@ class TableWidget(AbstractWidget):
                     outline="blue",
                     fill=self.background_color,
                 )
-                draw.text(
-                    (x + 10, y + 10), header, font=self.font, fill=self.header_color
-                )
+                draw.text((x + 10, y + 10), header, font=self.font, fill=self.header_color)
                 y += row_height
 
             # Draw rows as columns
@@ -115,8 +110,6 @@ class TableWidget(AbstractWidget):
                         outline="blue",
                         fill=self.background_color,
                     )
-                    draw.text(
-                        (x + 10, y + 10), cell, font=self.font, fill=self.row_color
-                    )
+                    draw.text((x + 10, y + 10), cell, font=self.font, fill=self.row_color)
                     y += row_height
                 offset_x += row_width

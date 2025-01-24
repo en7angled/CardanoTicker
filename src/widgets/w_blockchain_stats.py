@@ -1,12 +1,11 @@
-from src.widgets.generic.w_charts_generic import ProgressBarWidget
-from src.widgets.generic.w_table_generic import TableWidget
-from src.widgets.generic.w_charts_generic import LineChartWidget
-from src.utils.currency import PriceCurrency
-from src.utils.constants import RESOURCES_DIR
+import os
 
 from PIL import ImageFont
 
-import os
+from src.utils.constants import RESOURCES_DIR
+from src.utils.currency import PriceCurrency
+from src.widgets.generic.w_charts_generic import LineChartWidget, ProgressBarWidget
+from src.widgets.generic.w_table_generic import TableWidget
 
 
 class BlockchainTransactionsWidget(LineChartWidget):
@@ -36,13 +35,9 @@ class BlockchainTransactionsWidget(LineChartWidget):
 
 
 class BlockchainProgressWidget(ProgressBarWidget):
-    def __init__(
-        self, data_fetcher, size, background_color=(0.3, 0.3, 0.3), font_size=20
-    ):
+    def __init__(self, data_fetcher, size, background_color=(0.3, 0.3, 0.3), font_size=20):
         self.data_fetcher = data_fetcher
-        super().__init__(
-            size, 0, background_color=background_color, font_size=font_size
-        )
+        super().__init__(size, 0, background_color=background_color, font_size=font_size)
 
     def update(self):
         blockchain_stats = self.data_fetcher.blockchain_stats()

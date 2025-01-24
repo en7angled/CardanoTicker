@@ -1,10 +1,12 @@
+import json
 import os
 import sys
 import time
-import json
+
 from PIL import Image
-from data_fetcher import DataFetcher
+
 from dashboards.dashboard_generator import DashboardGenerator
+from data_fetcher import DataFetcher
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
 resources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")

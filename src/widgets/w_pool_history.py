@@ -1,16 +1,14 @@
-import numpy as np
+from typing import Tuple
 
+import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
-from typing import Tuple
 
 from src.widgets.generic.w_abstract import AbstractWidget
 
 
 class AdaPoolHistWidget(AbstractWidget):
-    def __init__(
-        self, data_fetcher, size: Tuple[int, int], pool_id, background_color="white"
-    ):
+    def __init__(self, data_fetcher, size: Tuple[int, int], pool_id, background_color="white"):
         """
         Initialize the widget
         Args:
@@ -44,20 +42,12 @@ class AdaPoolHistWidget(AbstractWidget):
 
         # Extract data
         epochs = [entry["epoch"] for entry in pool_history]
-        active_stake = [
-            entry["active_stake"] / 1e9 for entry in pool_history
-        ]  # Convert to billions
-        rewards = [
-            entry["rewards"] / 1e6 for entry in pool_history
-        ]  # Convert to millions
+        active_stake = [entry["active_stake"] / 1e9 for entry in pool_history]  # Convert to billions
+        rewards = [entry["rewards"] / 1e6 for entry in pool_history]  # Convert to millions
 
         # Filter epochs and blocks for red dots
-        epochs_with_blocks = [
-            entry["epoch"] for entry in pool_history if entry["blocks"] > 0
-        ]
-        blocks_with_blocks = [
-            entry["blocks"] for entry in pool_history if entry["blocks"] > 0
-        ]
+        epochs_with_blocks = [entry["epoch"] for entry in pool_history if entry["blocks"] > 0]
+        blocks_with_blocks = [entry["blocks"] for entry in pool_history if entry["blocks"] > 0]
 
         # Create subplots
         fig, ax1 = plt.subplots()
@@ -84,9 +74,7 @@ class AdaPoolHistWidget(AbstractWidget):
         color = self._normalize_color(self._convert_color("green"))
 
         ax2.set_ylabel("Rewards (M ADA)", color=color, fontsize=25)
-        ax2.plot(
-            epochs, rewards, color=color, label="Rewards", linestyle="--", linewidth=4
-        )
+        ax2.plot(epochs, rewards, color=color, label="Rewards", linestyle="--", linewidth=4)
         ax2.tick_params(axis="y", labelcolor=color, labelsize=25)
         # ax2.legend(loc='lower left')
 

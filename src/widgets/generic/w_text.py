@@ -1,12 +1,12 @@
 import os
 from datetime import datetime
-from typing import Tuple, List
-from PIL import ImageFont, ImageDraw, Image, ImageColor
+from typing import List, Tuple
 
+from PIL import Image, ImageColor, ImageDraw, ImageFont
 
 from src.utils.colors import Colors
-from src.widgets.generic.w_abstract import AbstractWidget
 from src.utils.constants import RESOURCES_DIR
+from src.widgets.generic.w_abstract import AbstractWidget
 
 
 class GenericTextWidget(AbstractWidget):
@@ -25,9 +25,7 @@ class GenericTextWidget(AbstractWidget):
         """
         super().__init__(size, background_color=background_color)
         # Load the font
-        self.font_path = os.path.join(
-            RESOURCES_DIR, "fonts/MerriweatherSans-VariableFont_wght.ttf"
-        )
+        self.font_path = os.path.join(RESOURCES_DIR, "fonts/MerriweatherSans-VariableFont_wght.ttf")
 
         self.__load_font(size=self.height // 2)
 
@@ -86,14 +84,10 @@ class GenericTextWidget(AbstractWidget):
 
         # adjust the font size to fit the price
         if self._auto_adjust_font:
-            self.font = self.__load_adjusted_font(
-                self._text, self.font, self.width - self._padding
-            )
+            self.font = self.__load_adjusted_font(self._text, self.font, self.width - self._padding)
 
         t_offset = (self.height - self.font_size) // 2
-        draw.text(
-            (self._padding, t_offset), self._text, self._text_color, font=self.font
-        )
+        draw.text((self._padding, t_offset), self._text, self._text_color, font=self.font)
 
 
 class DateTimeWidget(GenericTextWidget):
@@ -110,9 +104,7 @@ class DateTimeWidget(GenericTextWidget):
         """
         time_txt = datetime.now().strftime("%b %d, %H:%M")
 
-        super().__init__(
-            time_txt, size, text_color=text_color, background_color=background_color
-        )
+        super().__init__(time_txt, size, text_color=text_color, background_color=background_color)
 
     def update(self):
         """

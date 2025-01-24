@@ -1,12 +1,9 @@
-import time
-import requests
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime, timedelta
 
-
-from blockfrost import BlockFrostApi, ApiError, ApiUrls
+import pandas as pd
+import requests
+from blockfrost import ApiError, ApiUrls, BlockFrostApi
 
 
 class DataFetcher:
@@ -24,9 +21,7 @@ class DataFetcher:
 
         api_url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={symbol}&tsym={currency}&limit={days}&api_key={self.api_key}"
         raw = requests.get(api_url).json()
-        df = pd.DataFrame(raw["Data"]["Data"])[
-            ["time", "high", "low", "open", "close"]
-        ].set_index("time")
+        df = pd.DataFrame(raw["Data"]["Data"])[["time", "high", "low", "open", "close"]].set_index("time")
         df.index = pd.to_datetime(df.index, unit="s")
         return df
 
@@ -58,9 +53,7 @@ class DataFetcher:
             idx = 0
             while True:
                 idx += 1
-                block_data = self.blockfrost_api.block(
-                    current_block, return_type="json"
-                )
+                block_data = self.blockfrost_api.block(current_block, return_type="json")
                 block_time = datetime.fromtimestamp(block_data["time"])
 
                 # Get the minute of the block

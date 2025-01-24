@@ -1,12 +1,13 @@
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import pandas as pd
-import numpy as np
-from PIL import Image
 from typing import Tuple
 
-from src.widgets.generic.w_abstract import AbstractWidget
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from PIL import Image
+
 from src.data_fetcher.data_fetcher import DataFetcher
+from src.widgets.generic.w_abstract import AbstractWidget
 
 
 class PlotChart(AbstractWidget):
@@ -47,9 +48,7 @@ class PlotChart(AbstractWidget):
         """
         Validate the prices
         """
-        assert isinstance(
-            self._prices, pd.DataFrame
-        ), "Prices must be a pandas dataframe"
+        assert isinstance(self._prices, pd.DataFrame), "Prices must be a pandas dataframe"
         assert "open" in self._prices.columns, "Prices must have 'open' column"
         assert "close" in self._prices.columns, "Prices must have 'close' column"
         assert "high" in self._prices.columns, "Prices must have 'high' column"
@@ -104,9 +103,7 @@ class PlotChart(AbstractWidget):
         # plot down prices
         plt.bar(down.index, down.close - down.open, width, bottom=down.open, color=col2)
         plt.bar(down.index, down.high - down.open, width2, bottom=down.open, color=col2)
-        plt.bar(
-            down.index, down.low - down.close, width2, bottom=down.close, color=col2
-        )
+        plt.bar(down.index, down.low - down.close, width2, bottom=down.close, color=col2)
 
         # rotate x-axis tick labels
         #        t = np.array([self._prices.min().min(), self._prices.max().max()])

@@ -1,6 +1,7 @@
+from typing import Tuple
+
 import numpy as np
 from PIL import Image, ImageColor
-from typing import Tuple
 
 from src.widgets.generic.w_abstract import AbstractWidget
 
