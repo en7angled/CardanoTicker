@@ -1,0 +1,77 @@
+{
+    "canvas_size": [1280, 800],
+    "background_color": [0.7, 0.7, 0.7, 1],
+    "dashboard": [
+        {
+            "type": "text",
+            "size": [0.75, 0.1],
+            "position": [0, 0],
+            "data": {
+                    "text": " Cardano Network",
+                    "auto_ajust_font_size": true
+                    },
+            "text_color": "white",
+            "background_color": "blue"
+        },
+        {
+            "type": "date_text",
+            "size": [0.25, 0.1],
+            "position": [0.75, 0],
+            "data": {
+                "font_size": 20
+            },
+            "background_color": "blue",
+            "text_color": "white"
+        },
+        {
+            "type": "blockchain_stats_table",
+            "position": [0, 0.1],
+            "size": [0.5, 0.4],
+            "data": {
+                "font_size": 34,
+                "header_orientation": "rows"
+            },
+            "background_color": [0.7, 0.7, 0.7, 1]
+        },
+        {
+            "type": "ada_price",
+            "data": {
+                "currency": ["usd", "btc", "eth"]
+            },
+            "position": [0.5, 0.75],
+            "size": [0.5, 0.2],
+            "background_color": [0.7, 0.7, 0.7, 1]
+        },
+        {
+            "type": "supply_pie_chart",
+            "position": [0.5, 0.1],
+            "size": [0.5, 0.6],
+            "data": {
+                "pool_id": "pool1sj3gnahsms73uxxu43rgwczdw596en7dtsfcqf6297vzgcedquv",
+                "font_size": 15
+            },
+            "background_color": [0.7, 0.7, 0.7, 1]
+        },
+
+        {
+            "type": "blockchain_progress",
+            "position": [0, 0.5],
+            "size": [0.5, 0.1],
+            "data": {
+                "font_size": 20
+            },
+            "background_color": "darkblue"
+        },
+        {
+            "type": "blockchain_transactions",
+            "position": [0, 0.6],
+            "size": [0.5, 0.4],
+            "data": {
+                "font_size": 15,
+                "line_color": "blue"
+            },
+            "background_color": [0.7, 0.7, 0.7, 1]
+        }
+
+    ]
+}

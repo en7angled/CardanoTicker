@@ -1,0 +1,70 @@
+{
+    "canvas_size": [640, 400],
+    "background_color": "white",
+    "dashboard": [
+        {
+            "type": "text",
+            "size": [0.75, 0.1],
+            "position": [0, 0],
+            "data": {
+                    "text": " Very Important Pool [VIP]",
+                    "auto_ajust_font_size": true
+                    },
+            "text_color": "white",
+            "background_color": "blue"
+        },
+        {
+            "type": "date_text",
+            "size": [0.25, 0.1],
+            "position": [0.75, 0],
+            "data": {
+                "font_size": 10
+            },
+            "background_color": "blue",
+            "text_color": "white"
+        },
+
+        {
+            "type": "pool_info_table",
+            "size": [1, 0.19],
+            "position": [0, 0.1],
+            "data": {
+                "pool_id": "pool1sj3gnahsms73uxxu43rgwczdw596en7dtsfcqf6297vzgcedquv",
+                "font_size": 11,
+                "header_orientation": "columns"
+            },
+            "background_color": "white"
+        },
+        {
+            "type": "pool_stake_bar_chart",
+            "position": [0.005, 0.3],
+            "size": [0.5, 0.4],
+            "data": {
+                "pool_id": "pool1sj3gnahsms73uxxu43rgwczdw596en7dtsfcqf6297vzgcedquv",
+                "font_size": 8
+            },
+            "background_color": "white"
+        },
+        {
+            "type": "pool_history_chart",
+            "position": [0.505, 0.4],
+            "size": [0.5, 0.5],
+            "data": {
+                "pool_id": "pool1sj3gnahsms73uxxu43rgwczdw596en7dtsfcqf6297vzgcedquv",
+                "font_size": 20
+            },
+            "background_color": "white"
+        },
+        {
+            "type": "ada_price",
+            "data": {
+                "currency": ["usd", "btc"]
+            },
+            "position": [0.1, 0.75],
+            "size": [0.4, 0.2],
+            "text_color": "black",
+            "background_color": "white"
+        }
+
+    ]
+}

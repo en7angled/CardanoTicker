@@ -1,0 +1,59 @@
+{
+    "canvas_size": [640, 400],
+    "background_color": "white",
+    "dashboard": [
+        {
+            "type": "ada_price",
+            "data": {
+                "currency": ["usd", "btc"]
+            },
+            "position": [0, 0.2],
+            "size": [0.5, 0.2],
+            "text_color": "black",
+            "background_color": "white"
+        },
+        {
+            "type": "btc_price",
+            "data": {
+                "currency": ["usd", "eur", "ada"]
+            },
+            "position": [0.5, 0.2],
+            "text_color": "black",
+            "background_color": "white",
+            "size": [0.5, 0.2]
+        },
+        {
+            "type": "plot_chart",
+            "data": {
+                "symbol": "ada",
+                "currency": "usd"
+            },
+            "position": [0, 0.4],
+            "increasing_line_color": [0,1,0],
+            "decreasing_line_color": "red",
+            "text_color": "black",
+            "background_color": "white",
+            "size": [0.5, 0.6]
+        },
+        {
+            "type": "plot_chart",
+            "data": {
+                "symbol": "ada",
+                "currency": "btc"
+            },
+            "increasing_line_color": "blue",
+            "decreasing_line_color": "orange",
+            "position": [0.5, 0.4],
+            "text_color": "black",
+            "background_color": "white",
+            "size": [0.5, 0.6]
+        },
+        {
+            "type": "date_text",
+            "position": [0, 0],
+            "size": [1, 0.2],
+            "background_color": "darkblue",
+            "text_color": "white"
+        }
+    ]
+}

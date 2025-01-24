@@ -42,7 +42,7 @@ The Cardano Ticker project provides a compact, DIY cryptocurrency tracking devic
    - only required for non-portable standalone version
 8. **Buttons and Sensors (Optional):**
    - For user interactions or future extensions.
-     
+
 ---
 
 ## 4. Software Functionalities
@@ -122,4 +122,3 @@ The Cardano Ticker project provides a compact, DIY cryptocurrency tracking devic
 1. Integration with additional blockchains.
 2. Enhanced data visualization tools.
 3. Battery optimization for longer runtimes.
-
