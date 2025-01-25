@@ -13,7 +13,7 @@ setup(
     package_dir={"": "src"},
     include_package_data=True,  # Required for non-code files
     package_data={
-        "cardano_ticker": ["resources/**/*"],  # Adjust the path to match your project structure
+        "cardano_ticker": ["data/**/*"],  # Adjust the path to match your project structure
     },
     install_requires=[
         "requests>=2.25.0,<3.0.0",
@@ -31,7 +31,7 @@ setup(
     python_requires=">=3.9, <=3.13.1",
     entry_points={
         "console_scripts": [
-            "cardano-ticker=cardano_ticker.cli:main",
+            "cardano-ticker-provider=cardano_ticker.dashboards.dashboard_provider:main",
         ],
     },
 )
