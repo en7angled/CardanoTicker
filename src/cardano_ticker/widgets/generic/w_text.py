@@ -4,9 +4,9 @@ from typing import List, Tuple
 
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
-from src.utils.colors import Colors
-from src.utils.constants import RESOURCES_DIR
-from src.widgets.generic.w_abstract import AbstractWidget
+from cardano_ticker.utils.colors import Colors
+from cardano_ticker.utils.constants import RESOURCES_DIR
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class GenericTextWidget(AbstractWidget):
@@ -45,7 +45,7 @@ class GenericTextWidget(AbstractWidget):
             font: The font to use
             width: The width to fit the text in
         """
-        while font.getsize(text)[0] > width:
+        while font.getbbox(text)[2] > width:
             font.size -= 1
             font = ImageFont.truetype(self.font_path, font.size)
         return font
@@ -146,7 +146,7 @@ class MutiTextWidget(AbstractWidget):
                 x = 10
 
             draw.text((x, y), new_lines + text, font=font, fill=color)
-            x += font.getsize(text)[0]
+            x += font.getbbox(text)[2]
 
     def _convert_color(self, color):
         if isinstance(color, tuple):

@@ -5,8 +5,8 @@ from typing import List, Tuple
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 
-from src.utils.constants import RESOURCES_DIR
-from src.widgets.generic.w_abstract import AbstractWidget
+from cardano_ticker.utils.constants import RESOURCES_DIR
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class BarChartWidget(AbstractWidget):
@@ -217,7 +217,7 @@ class ProgressBarWidget(AbstractWidget):
         # Draw the progress text
         font = ImageFont.truetype(self.font_path, self.font_size)
         text = f"{int(self.progress * 100)}%"
-        text_width, text_height = draw.textsize(text, font)
+        _, _, text_width, text_height = draw.textbbox((0, 0), text, font)
         text_x = (self.resolution[0] - text_width) // 2
         text_y = (self.resolution[1] - text_height) // 2
         draw.text((text_x, text_y), text, font=font, fill=self.text_color)

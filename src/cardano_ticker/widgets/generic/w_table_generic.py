@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 from PIL import ImageColor, ImageDraw, ImageFont
 
-from src.widgets.generic.w_abstract import AbstractWidget
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class TableWidget(AbstractWidget):
@@ -51,13 +51,13 @@ class TableWidget(AbstractWidget):
         x, y = 10, 10
         header_widths = [
             max(
-                self.font.getsize(header)[0],
-                max(self.font.getsize(row[i])[0] for row in self.rows),
+                self.font.getbbox(header)[2],
+                max(self.font.getbbox(row[i])[2] for row in self.rows),
             )
             + 20
             for i, header in enumerate(self.headers)
         ]
-        row_height = self.font.getsize(self.headers[0])[1] + 20
+        row_height = self.font.getbbox(self.headers[0])[3] + 20
 
         if self.header_orientation == "columns":
             # Draw headers
@@ -101,7 +101,7 @@ class TableWidget(AbstractWidget):
             offset_x = max_header_width
             for i, row in enumerate(self.rows):
                 x = 10 + offset_x
-                row_width = max(self.font.getsize(cell)[0] for cell in row) + 20
+                row_width = max(self.font.getbbox(cell)[2] for cell in row) + 20
 
                 y = 10
                 for j, cell in enumerate(row):

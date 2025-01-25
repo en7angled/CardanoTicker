@@ -1,6 +1,6 @@
 from enum import Enum
 
-from src.utils.colors import Colors
+from cardano_ticker.utils.colors import Colors
 
 
 class PriceCurrency(Enum):

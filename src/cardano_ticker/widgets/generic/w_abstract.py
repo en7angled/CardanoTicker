@@ -2,7 +2,7 @@ from typing import Tuple
 
 from PIL import Image, ImageColor
 
-from src.utils.colors import Colors
+from cardano_ticker.utils.colors import Colors
 
 
 class AbstractWidget:

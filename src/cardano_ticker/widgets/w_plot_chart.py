@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
-from src.data_fetcher.data_fetcher import DataFetcher
-from src.widgets.generic.w_abstract import AbstractWidget
+from cardano_ticker.data_fetcher.data_fetcher import DataFetcher
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class PlotChart(AbstractWidget):

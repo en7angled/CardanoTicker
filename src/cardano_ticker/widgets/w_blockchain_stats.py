@@ -2,10 +2,13 @@ import os
 
 from PIL import ImageFont
 
-from src.utils.constants import RESOURCES_DIR
-from src.utils.currency import PriceCurrency
-from src.widgets.generic.w_charts_generic import LineChartWidget, ProgressBarWidget
-from src.widgets.generic.w_table_generic import TableWidget
+from cardano_ticker.utils.constants import RESOURCES_DIR
+from cardano_ticker.utils.currency import PriceCurrency
+from cardano_ticker.widgets.generic.w_charts_generic import (
+    LineChartWidget,
+    ProgressBarWidget,
+)
+from cardano_ticker.widgets.generic.w_table_generic import TableWidget
 
 
 class BlockchainTransactionsWidget(LineChartWidget):

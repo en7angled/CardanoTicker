@@ -3,13 +3,14 @@ import os
 import sys
 import time
 
-from PIL import Image
-
 from dashboards.dashboard_generator import DashboardGenerator
 from data_fetcher import DataFetcher
+from PIL import Image
+
+from cardano_ticker.utils.constants import RESOURCES_DIR
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
-resources_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "resources")
+
 dashboard_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dashboards")
 
 
@@ -32,7 +33,7 @@ while True:
 
         # save output on disk
         out = dashboard_img.transpose(Image.ROTATE_180)
-        out.save(os.path.join(resources_dir, "frame.bmp"))
-        print(resources_dir, "SAVED!")
+        out.save(os.path.join(RESOURCES_DIR, "frame.bmp"))
+        print(RESOURCES_DIR, "SAVED!")
 
     time.sleep(1500)

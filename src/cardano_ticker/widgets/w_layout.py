@@ -3,7 +3,7 @@ from typing import Tuple
 import numpy as np
 from PIL import Image, ImageColor
 
-from src.widgets.generic.w_abstract import AbstractWidget
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class WidgetLayout:

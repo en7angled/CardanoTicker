@@ -3,11 +3,11 @@ from typing import List, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 
-from src.data_fetcher.data_fetcher import DataFetcher
-from src.utils.colors import Colors
-from src.utils.constants import RESOURCES_DIR
-from src.utils.currency import PriceCurrency
-from src.widgets.generic.w_abstract import AbstractWidget, ImageWidget
+from cardano_ticker.data_fetcher.data_fetcher import DataFetcher
+from cardano_ticker.utils.colors import Colors
+from cardano_ticker.utils.constants import RESOURCES_DIR
+from cardano_ticker.utils.currency import PriceCurrency
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget, ImageWidget
 
 
 class LogoBtc(ImageWidget):
@@ -124,11 +124,11 @@ class PriceWidget(AbstractWidget):
         nb_lines = text.count("\n") + 1
         get_longest_line = max(text.split("\n"), key=len)
 
-        f_size = font.getsize(get_longest_line)
+        f_size = font.getbbox(get_longest_line)[2:]
         while f_size[0] > size[0] or nb_lines * f_size[1] > size[1]:
             font.size -= 1
             font = ImageFont.truetype(self.font_path, font.size)
-            f_size = font.getsize(get_longest_line)
+            f_size = font.getbbox(get_longest_line)[2:]
 
         return font
 
@@ -173,7 +173,7 @@ class PriceWidget(AbstractWidget):
         # Draw the currency sign
         symbol = self._currency.get_symbol()
         symbol_color = self._currency.get_color()
-        start_pos = self.font.getsize(price_txt)[0] + 5
+        start_pos = self.font.getbbox(price_txt)[2] + 5
         draw.text((start_pos, t_offset), symbol, symbol_color, font=self.font)
 
 

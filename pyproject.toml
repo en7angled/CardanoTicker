@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cardano_ticker"
+version = "0.1.0"
+description = "A customizable Cardano Ticker with e-ink and LCD display options."
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Andrei Georgescu", email = "andrei.georgescoo@yahoo.com"},
+    {name = "Marius Georgescu", email = "georgescumarius@live.com"},
+
+    ]
+dependencies = [
+    "requests>=2.25.0,<=3.0.0",
+    "matplotlib>=3.4.0,<=4.0.0",
+    "numpy>=2.0.2,<2.2.2",
+    "pandas>=2.2.0,<=2.2.3",
+    "Pillow>=9.5.0,<=11.1.0",
+    "blockfrost-python>=0.6.0"
+]
+requires-python = ">=3.9,<=3.13.1"
+
+[tool.setuptools]
+packages = {find = {where = ["src"]}}
+include-package-data = true
+
+[tool.setuptools.package-data]
+cardano_ticker = ["resources/**/*"]

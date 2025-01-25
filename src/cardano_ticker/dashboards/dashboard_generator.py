@@ -1,19 +1,27 @@
-from src.utils.currency import currency_from_str
-from src.widgets.generic.w_text import DateTimeWidget, GenericTextWidget, MutiTextWidget
-from src.widgets.w_blockchain_stats import (
+from cardano_ticker.utils.currency import currency_from_str
+from cardano_ticker.widgets.generic.w_text import (
+    DateTimeWidget,
+    GenericTextWidget,
+    MutiTextWidget,
+)
+from cardano_ticker.widgets.w_blockchain_stats import (
     BlockchainProgressWidget,
     BlockchainStatsTable,
     BlockchainTransactionsWidget,
 )
-from src.widgets.w_coin_price import (
+from cardano_ticker.widgets.w_coin_price import (
     AdaPriceWithLogo,
     BtcPriceWithLogo,
     EthPriceWithLogo,
 )
-from src.widgets.w_layout import WidgetLayout
-from src.widgets.w_plot_chart import PlotChart
-from src.widgets.w_pool import PoolInfoTable, PoolStakeBarChart, SupplyPieChartWidget
-from src.widgets.w_pool_history import AdaPoolHistWidget
+from cardano_ticker.widgets.w_layout import WidgetLayout
+from cardano_ticker.widgets.w_plot_chart import PlotChart
+from cardano_ticker.widgets.w_pool import (
+    PoolInfoTable,
+    PoolStakeBarChart,
+    SupplyPieChartWidget,
+)
+from cardano_ticker.widgets.w_pool_history import AdaPoolHistWidget
 
 
 class DashboardGenerator:

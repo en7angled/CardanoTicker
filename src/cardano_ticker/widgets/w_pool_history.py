@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from PIL import Image
 
-from src.widgets.generic.w_abstract import AbstractWidget
+from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class AdaPoolHistWidget(AbstractWidget):
