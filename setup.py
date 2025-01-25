@@ -17,7 +17,7 @@ setup(
     },
     install_requires=[
         "requests>=2.25.0,<3.0.0",
-        "matplotlib>=3.4.0,<4.0.0",
+        "matplotlib>=3.10.0,<4.0.0",
         "numpy>=2.0.2,<2.2.2",
         "pandas>=2.2.0,<=2.2.3",
         "Pillow>=9.5.0,<=11.1.0",
