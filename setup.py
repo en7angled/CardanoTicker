@@ -16,19 +16,19 @@ setup(
         "cardano_ticker": ["data/**/*"],  # Adjust the path to match your project structure
     },
     install_requires=[
-        "requests>=2.25.0,<3.0.0",
-        "matplotlib>=3.10.0,<4.0.0",
-        "numpy>=2.0.2,<2.2.2",
-        "pandas>=2.2.0,<=2.2.3",
+        "requests>=2.25.0,<=3.0.0",
+        "matplotlib>=3.4.0,<=3.6.3",
+        "numpy>=1.26.3,<2",
+        "pandas<=2.2.0",
         "Pillow>=9.5.0,<=11.1.0",
-        "blockfrost-python>=0.1.0,<1.0.0",
+        "blockfrost-python>=0.6.0",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires=">=3.9, <=3.13.1",
+    python_requires=">=3.9, <=3.11.2",
     entry_points={
         "console_scripts": [
             "cardano-ticker-provider=cardano_ticker.dashboards.dashboard_provider:main",
