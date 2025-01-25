@@ -11,29 +11,40 @@ from cardano_ticker.utils.constants import RESOURCES_DIR
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
 
-dashboard_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "dashboards")
+SAMPLES_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "samples")
 
-
-fetcher = DataFetcher()
-generator = DashboardGenerator(fetcher)
-
-IMG_HW = (400, 640)
-
-dashboard_description_file = os.path.join(dashboard_dir, "price_dashboard_example.json")
 
 while True:
 
-    # get dashboard description
-    with open(dashboard_description_file, "r") as f:
-        dashboard_description = json.load(f)
+    # read configuration
+    config_file = os.path.join(RESOURCES_DIR, "config.json")
+    config = json.load(open(config_file, "r"))
 
-        # create dashboard
-        dashboard = generator.json_to_layout(dashboard_description)
-        dashboard_img = dashboard.render()
+    fetcher = DataFetcher(blockfrost_project_id=config["blockfrost_project_id"])
+    generator = DashboardGenerator(fetcher)
 
-        # save output on disk
-        out = dashboard_img.transpose(Image.ROTATE_180)
-        out.save(os.path.join(RESOURCES_DIR, "frame.bmp"))
-        print(RESOURCES_DIR, "SAVED!")
+    name, ticker = fetcher.pool_name_and_ticker(config["pool_id"])
+    value_dict = {
+        "pool_name": f" [{ticker}] {name} ",
+        "pool_id": config["pool_id"],
+    }
+
+    dashboard_dir = config.get("dashboard_path", SAMPLES_DIR)
+    dashboard_name = config.get("dashboard_name", "price_dashboard_example")
+    dashboard_description_file = os.path.join(dashboard_dir, f"{dashboard_name}.json")
+
+    dashboard_description = json.load(open(dashboard_description_file, "r"))
+
+    # update dashboard description with configuration values
+    dashboard_description = DashboardGenerator.update_dashboard_description(dashboard_description, value_dict)
+
+    # create dashboard
+    dashboard = generator.json_to_layout(dashboard_description)
+    dashboard_img = dashboard.render()
+
+    # save output on disk
+    out = dashboard_img.transpose(Image.ROTATE_180)
+    out.save(os.path.join(RESOURCES_DIR, "frame.bmp"))
+    print(RESOURCES_DIR, "SAVED!")
 
     time.sleep(1500)

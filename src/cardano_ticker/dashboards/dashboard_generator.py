@@ -174,3 +174,35 @@ class DashboardGenerator:
 
             layout.add_widget(widget, position)
         return layout
+
+    @staticmethod
+    def __replace_placeholders_in_json(json_data, placeholders_name, value):
+        """
+        Replace placeholders in a json with the value
+        """
+
+        # if a field in json is a string of the form @placeholder_name, replace it with the value
+        if isinstance(json_data, dict):
+            for k, v in json_data.items():
+                json_data[k] = DashboardGenerator.__replace_placeholders_in_json(v, placeholders_name, value)
+        elif isinstance(json_data, list):
+            for i, v in enumerate(json_data):
+                json_data[i] = DashboardGenerator.__replace_placeholders_in_json(v, placeholders_name, value)
+        elif isinstance(json_data, str):
+            if json_data == f"@{placeholders_name}":
+                return value
+
+        return json_data
+
+    @staticmethod
+    def update_dashboard_description(dashboard_description, values_dict):
+        """
+        Update the dashboard description with values from the configuration
+        The values_dict is a dictionary with the placeholder name as key and the value as value
+        Returns the updated dashboard description
+        """
+        # update the dashboard description with the configuration
+        for k, v in values_dict.items():
+            dashboard_description = DashboardGenerator.__replace_placeholders_in_json(dashboard_description, k, v)
+
+        return dashboard_description

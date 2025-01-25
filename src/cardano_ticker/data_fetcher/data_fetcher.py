@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -7,12 +8,12 @@ from blockfrost import ApiError, ApiUrls, BlockFrostApi
 
 
 class DataFetcher:
-    def __init__(self):
-        self.api_key = "YOUR API KEY"
+    def __init__(self, api_key="", blockfrost_project_id=""):
+        self.api_key = api_key
+        blockfrost_id = os.getenv("BLOCKFROST_PROJECT_ID", default=blockfrost_project_id)
 
         self.blockfrost_api = BlockFrostApi(
-            project_id="mainnet3LnDqKB0Yd299gaU4hnoWmJ0hUw60GTO",  # or export environment variable BLOCKFROST_PROJECT_ID
-            # optional: pass base_url or export BLOCKFROST_API_URL to use testnet, defaults to ApiUrls.mainnet.value
+            project_id=blockfrost_id,
             base_url=ApiUrls.mainnet.value,
         )
         self.cached_stats = None
@@ -35,6 +36,10 @@ class DataFetcher:
 
     def pool_history(self, pool_id):
         return self.blockfrost_api.pool_history(pool_id, return_type="json")
+
+    def pool_name_and_ticker(self, pool_id):
+        pool_data = self.blockfrost_api.pool_metadata(pool_id, return_type="json")
+        return pool_data["name"], pool_data["ticker"]
 
     def network(self):
         return self.blockfrost_api.network(return_type="json")
