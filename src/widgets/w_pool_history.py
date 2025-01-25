@@ -8,7 +8,7 @@ from src.widgets.generic.w_abstract import AbstractWidget
 
 
 class AdaPoolHistWidget(AbstractWidget):
-    def __init__(self, data_fetcher, size: Tuple[int, int], pool_id, background_color="white"):
+    def __init__(self, data_fetcher, size: Tuple[int, int], pool_id, background_color="white", font_size=25):
         """
         Initialize the widget
         Args:
@@ -20,6 +20,7 @@ class AdaPoolHistWidget(AbstractWidget):
         self.data_fetcher = data_fetcher
         self.pool_id = pool_id
         self.pool_data = self.data_fetcher.pool_history(self.pool_id)
+        self.font_size = font_size
 
     def update(self):
         """
@@ -52,30 +53,32 @@ class AdaPoolHistWidget(AbstractWidget):
         # Create subplots
         fig, ax1 = plt.subplots()
 
-        fig.set_size_inches(18, 10)
+        fig.set_size_inches(self.width / 100, self.height / 100)
 
         # Plot active stake
         color = "tab:blue"
-        ax1.set_xlabel("Epoch", fontsize=25)
+        ax1.set_xlabel("Epoch", fontsize=self.font_size)
 
         # set background color for the chart
         bk_color = np.array(self.background_color) / 255
         ax1.set_facecolor(bk_color)
         fig.patch.set_facecolor(bk_color)
 
-        ax1.set_ylabel("Active Stake (B ADA)", color=color, fontsize=25)
-        ax1.plot(epochs, active_stake, color=color, label="Active Stake", linewidth=4)
-        ax1.tick_params(axis="y", labelcolor=color, labelsize=25)
-        ax1.tick_params(axis="x", labelsize=25)
+        linewidth = self.width / 500
+
+        ax1.set_ylabel("Active Stake (B ADA)", color=color, fontsize=self.font_size)
+        ax1.plot(epochs, active_stake, color=color, label="Active Stake", linewidth=linewidth)
+        ax1.tick_params(axis="y", labelcolor=color, labelsize=self.font_size)
+        ax1.tick_params(axis="x", labelsize=self.font_size)
         # ax1.legend(loc='upper left')
 
         # Plot rewards on a secondary y-axis
         ax2 = ax1.twinx()
         color = self._normalize_color(self._convert_color("green"))
 
-        ax2.set_ylabel("Rewards (M ADA)", color=color, fontsize=25)
-        ax2.plot(epochs, rewards, color=color, label="Rewards", linestyle="--", linewidth=4)
-        ax2.tick_params(axis="y", labelcolor=color, labelsize=25)
+        ax2.set_ylabel("Rewards (M ADA)", color=color, fontsize=self.font_size)
+        ax2.plot(epochs, rewards, color=color, label="Rewards", linestyle="--", linewidth=linewidth)
+        ax2.tick_params(axis="y", labelcolor=color, labelsize=self.font_size)
         # ax2.legend(loc='lower left')
 
         # Plot blocks as red dots only when blocks > 0
@@ -90,7 +93,7 @@ class AdaPoolHistWidget(AbstractWidget):
 
         # fig.legend(loc='upper right')
         # Add title
-        plt.title("Pool History: Active Stake, Rewards, and Blocks", fontsize=30)
+        # plt.title("Pool History: Active Stake, Rewards, and Blocks", fontsize=self.font_size)
 
         # Show plot
         plt.tight_layout()

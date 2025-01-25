@@ -1,5 +1,5 @@
 {
-    "canvas_size": [1280, 800],
+    "canvas_size": [640, 400],
     "background_color": [0.7, 0.7, 0.7, 1],
     "dashboard": [
         {
@@ -28,7 +28,7 @@
             "position": [0, 0.1],
             "size": [0.5, 0.4],
             "data": {
-                "font_size": 34,
+                "font_size": 15,
                 "header_orientation": "rows"
             },
             "background_color": [0.7, 0.7, 0.7, 1]
@@ -48,26 +48,26 @@
             "size": [0.5, 0.6],
             "data": {
                 "pool_id": "pool1sj3gnahsms73uxxu43rgwczdw596en7dtsfcqf6297vzgcedquv",
-                "font_size": 15
+                "font_size": 8
             },
             "background_color": [0.7, 0.7, 0.7, 1]
         },
 
         {
             "type": "blockchain_progress",
-            "position": [0, 0.5],
-            "size": [0.5, 0.1],
+            "position": [0, 0.51],
+            "size": [0.5, 0.08],
             "data": {
-                "font_size": 20
+                "font_size": 15
             },
             "background_color": "darkblue"
         },
         {
             "type": "blockchain_transactions",
-            "position": [0, 0.6],
-            "size": [0.5, 0.4],
+            "position": [0, 0.61],
+            "size": [0.5, 0.38],
             "data": {
-                "font_size": 15,
+                "font_size": 8,
                 "line_color": "blue"
             },
             "background_color": [0.7, 0.7, 0.7, 1]

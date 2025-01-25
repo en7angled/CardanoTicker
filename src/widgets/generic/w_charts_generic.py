@@ -164,7 +164,7 @@ class LineChartWidget(AbstractWidget):
 
         fig, ax = plt.subplots(figsize=(self.width / 100, self.height / 100))
         if self.title:
-            ax.set_title(self.title)
+            ax.set_title(self.title, fontsize=self.font_size)
             # set title color
             # ax.title.set_color("white")
 

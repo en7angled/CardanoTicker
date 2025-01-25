@@ -58,7 +58,6 @@ class PoolInfoTable(TableWidget):
             ]
         ]
 
-        print(headers, rows)
         super().update(headers, rows, self.header_orientation)
 
 

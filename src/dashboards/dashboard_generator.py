@@ -111,6 +111,7 @@ class DashboardGenerator:
                     size,
                     widget_data["data"]["pool_id"],
                     background_color=background_color,
+                    font_size=font_size,
                 )
             elif widget_type == "supply_pie_chart":
                 widget = SupplyPieChartWidget(
