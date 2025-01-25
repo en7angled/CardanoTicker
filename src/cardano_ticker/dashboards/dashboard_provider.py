@@ -20,7 +20,7 @@ def main():
     config = json.load(open(ticker_config_path, "r"))
 
     # read configuration values
-    refresh_interval_s = config.get("refresh_interval", 60)
+    refresh_interval_s = config.get("refresh_interval_s", 60)
     output_dir = config.get("output_dir", RESOURCES_DIR)
     if output_dir is None:
         output_dir = RESOURCES_DIR
