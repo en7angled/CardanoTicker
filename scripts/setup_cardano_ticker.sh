@@ -14,8 +14,8 @@ echo  $REPO_DIR
 CURRENT_USER=$(whoami)
 
 # Prompt the user to choose virtual environment setup
-echo "Do you want to use a virtual environment for installation? (recommended)"
-echo "Type 'yes' to use venv or 'no' to install system-wide with --break-system-packages:"
+echo "Do you want to use a virtual environment for installation?"
+echo "Type 'yes' to use venv or 'no' to install system-wide with --break-system-packages:  (recommended for Raspberry Pi Zero)"
 read -r USE_VENV
 
 # Virtual environment path
