@@ -116,3 +116,7 @@ def main():
 
         # wait for the next refresh
         time.sleep(refresh_interval_s)
+
+
+if __name__ == "__main__":
+    main()
