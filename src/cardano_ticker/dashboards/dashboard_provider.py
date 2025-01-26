@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import sys
 import time
@@ -10,6 +11,9 @@ from cardano_ticker.data_fetcher.data_fetcher import DataFetcher
 from cardano_ticker.utils.constants import RESOURCES_DIR
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
+
+# Initialize logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 def read_config():
@@ -82,6 +86,7 @@ def main():
 
     # read configuration
     config = read_config()
+    logging.info(f"Configuration: {config}")
 
     # extract configuration values
     refresh_interval_s = config.get("refresh_interval_s", 60)
@@ -89,12 +94,16 @@ def main():
     if output_dir is None:
         output_dir = RESOURCES_DIR
 
+    logging.info(f"Output directory: {output_dir}")
+
     # create fetcher and generator
     fetcher = DataFetcher(blockfrost_project_id=config["blockfrost_project_id"])
     generator = DashboardGenerator(fetcher)
 
     # create dashboard
+    logging.info("Creating dashboard")
     dashboard = create_dashboard(fetcher, generator, config)
+    logging.info("Dashboard created")
 
     while True:
         # update dashboard
@@ -103,7 +112,7 @@ def main():
         # save output on disk
         out = dashboard_img.transpose(Image.ROTATE_180)
         out.save(os.path.join(output_dir, "frame.bmp"))
-        print(output_dir, "SAVED!")
+        logging.info(f"{output_dir} SAVED!")
 
         # wait for the next refresh
         time.sleep(refresh_interval_s)
