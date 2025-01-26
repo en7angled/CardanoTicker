@@ -13,7 +13,7 @@ from cardano_ticker.utils.constants import RESOURCES_DIR
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
 
 # Initialize logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def read_config():
