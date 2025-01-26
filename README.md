@@ -22,13 +22,18 @@ Follow these steps to assemble and configure your CardanoTicker:
 
 Refer to the [Hardware Components List](https://github.com/en7angled/CardanoTicker/blob/main/m1/hardware_components_list.md) for detailed sourcing options. All components are listed with suppliers, costs, and compatibility information.
 
-### 2. 3D Case Printing
 
-Download the STL files from the [Printables link](https://www.printables.com/model/1145410-4-inch-display-case). Ensure you have access to a 3D printer and follow the printing instructions for optimal results.
-
-### 3. Software Setup
+### 2. Software Setup
 
 Clone the repository and follow the [Setup Guide](https://github.com/en7angled/CardanoTicker/blob/main/docs/Cardano_Ticker_Installation_Guide.md) to configure the software.
+
+### 3. System Components Overview
+
+Refer to the [System Components](https://github.com/en7angled/CardanoTicker/blob/main/docs/System_Components.md) for the system design details
+
+### 4. 3D Case Printing
+
+Download the STL files from the [Printables link](https://www.printables.com/model/1145410-4-inch-display-case). Ensure you have access to a 3D printer and follow the printing instructions for optimal results.
 
 
 ## Screenshots
