@@ -24,16 +24,12 @@ Refer to the [Hardware Components List](https://github.com/en7angled/CardanoTick
 
 ### 2. 3D Case Printing
 
-Download the STL files from the [Thingiverse/Printables link](https://www.printables.com/model/1145410-4-inch-display-case). Ensure you have access to a 3D printer and follow the printing instructions for optimal results.
+Download the STL files from the [Printables link](https://www.printables.com/model/1145410-4-inch-display-case). Ensure you have access to a 3D printer and follow the printing instructions for optimal results.
 
 ### 3. Software Setup
 
-Clone the repository and follow the [Setup Guide](#) to configure the software.
+Clone the repository and follow the [Setup Guide](https://github.com/en7angled/CardanoTicker/blob/main/docs/Cardano_Ticker_Installation_Guide.md) to configure the software.
 
-```bash
-git clone https://github.com/en7angled/CardanoTicker.git
-cd CardanoTicker
-```
 
 ## Screenshots
 <img width="730" alt="image" src="https://github.com/user-attachments/assets/138b09a5-7973-4604-8e68-effacddc3b99" />
@@ -43,8 +39,8 @@ cd CardanoTicker
 
 We welcome contributions from the community! Here’s how you can contribute:
 
-1. Report bugs or suggest features via [GitHub Issues](#).
-2. Discuss ideas in the [GitHub Discussions](#).
+1. Report bugs or suggest features via [GitHub Issues](https://github.com/en7angled/CardanoTicker/issues).
+2. Discuss ideas in the [GitHub Discussions](https://github.com/en7angled/CardanoTicker/discussions/).
 3. Submit pull requests (PRs) that align with the project’s goals.
 
 
@@ -58,8 +54,7 @@ We welcome contributions from the community! Here’s how you can contribute:
 
 Your feedback is invaluable! Use the following channels for support or feedback:
 
-- **GitHub Issues**: [Report Bugs](#)
-- **Community Discussions**: [Join the Conversation](#)
-- **Feedback Form**: [Submit Feedback](#)
+- **GitHub Issues**: [Report Bugs](https://github.com/en7angled/CardanoTicker/issues)
+- **Community Discussions**: [Join the Conversation](https://github.com/en7angled/CardanoTicker/discussions/)
 
 
