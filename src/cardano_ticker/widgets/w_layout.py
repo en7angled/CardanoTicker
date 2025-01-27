@@ -1,9 +1,13 @@
+import logging
 from typing import Tuple
 
 import numpy as np
 from PIL import Image, ImageColor
 
 from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
+
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
 
 
 class WidgetLayout:
@@ -76,8 +80,14 @@ class WidgetLayout:
         Render the layout
         """
         self._canvas = Image.new("RGBA", self.resolution, self.background_color)
-        for widget, position in self._widgets:
+
+        # update widgets with new data
+        logging.info("Fetching data and updating widgets")
+        for widget, _ in self._widgets:
             widget.update()
+
+        logging.info("Rendering widgets on canvas")
+        for widget, position in self._widgets:
             widget.render()
             widget_img = widget.get()
             # rescale image to layout units
