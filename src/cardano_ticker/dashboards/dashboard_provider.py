@@ -5,10 +5,16 @@ import sys
 import time
 
 from PIL import Image
+import socket
+import threading
+import hashlib
+import struct
 
 from cardano_ticker.dashboards.dashboard_generator import DashboardGenerator
 from cardano_ticker.data_fetcher.data_fetcher import DataFetcher
+from cardano_ticker.dashboards.config import read_config
 from cardano_ticker.utils.constants import RESOURCES_DIR
+from cardano_ticker.dashboards.dashboard_commands import DashboardCommand
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
 
@@ -16,107 +22,210 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
 logging.basicConfig(level=logging.INFO)
 
 
-def read_config():
+
+class DashboardManager:
     """
-    Read configuration file, and return the configuration dictionary
-    """
-
-    # read configuration
-    default_config_path = os.path.join(RESOURCES_DIR, "config.json")
-    ticker_config_path = os.environ.get("TICKER_CONFIG_PATH", default_config_path)
-
-    try:
-        config = json.load(open(ticker_config_path, "r"))
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Config file {ticker_config_path} not found.")
-    except json.JSONDecodeError:
-        raise ValueError(f"Config file {ticker_config_path} is not a valid json file.")
-    except Exception as e:
-        raise ValueError(f"Error reading config file {ticker_config_path}: {e}")
-    return config
-
-
-def create_dashboard(data_fetcher, dashboard_generator, config):
-    """
-    Create the dashboard from the configuration, and return it
+    Class to manage the rendering of the dashboard, and the socket server
     """
 
-    SAMPLES_DIR = os.path.join(RESOURCES_DIR, "dashboard_samples")
-    dashboard_dir = config.get("dashboard_path", SAMPLES_DIR)
-    if dashboard_dir is None:
-        dashboard_dir = SAMPLES_DIR
+    def __init__(self) -> None:
 
-    dashboard_name = config.get("dashboard_name", "price_dashboard_example")
+        # read configuration
+        self.config = read_config()
+        logging.info(f"Configuration: {self.config}")
 
-    # get pool name and ticker
-    name, ticker = data_fetcher.pool_name_and_ticker(config["pool_id"])
-    value_dict = {
-        "pool_name": f" [{ticker}] {name} ",
-        "pool_id": config["pool_id"],
-    }
+        # extract configuration values
+        self.refresh_interval_s = self.config.get("refresh_interval_s", 60)
+        self.output_dir = self.config.get("output_dir", RESOURCES_DIR)
+        if self.output_dir is None:
+            self.output_dir = RESOURCES_DIR
+        logging.info(f"Output directory: {self.output_dir}")
 
-    filename = f"{dashboard_name}.json"
-    dashboard_description_file = os.path.join(dashboard_dir, filename)
+        SAMPLES_DIR = os.path.join(RESOURCES_DIR, "dashboard_samples")
+        dashboard_dir = self.config.get("dashboard_path", SAMPLES_DIR)
+        if dashboard_dir is None:
+            dashboard_dir = SAMPLES_DIR
+        self.dashboard_dir = dashboard_dir
+        logging.info(f"Dashboard directory: {self.dashboard_dir}")
 
-    try:
-        dashboard_description = json.load(open(dashboard_description_file, "r"))
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Dashboard file {dashboard_description_file} not found.")
-    except json.JSONDecodeError:
-        raise ValueError(f"Dashboard file {dashboard_description_file} is not a valid json file.")
-    except Exception as e:
-        raise ValueError(f"Error reading dashboard file {dashboard_description_file}: {e}")
+        # create fetcher and generator
+        self.fetcher = DataFetcher(blockfrost_project_id=self.config["blockfrost_project_id"])
+        self.dashboard_generator = DashboardGenerator(self.fetcher)
+        self.current_dashboard = None
+        self.mutex = threading.Lock()
+        self.last_image = None
 
-    # update dashboard description with configuration values
-    dashboard_description = DashboardGenerator.update_dashboard_description(dashboard_description, value_dict)
 
-    # create dashboard
-    try:
-        dashboard = dashboard_generator.json_to_layout(dashboard_description)
-    except Exception as e:
-        raise ValueError(f"Error creating dashboard: {e}")
+    def __get_dashboard_file_from_config(self):
+        """
+        Get the dashboard file from the configuration
+        """
 
-    return dashboard
+        dashboard_name = self.config.get("dashboard_name", "price_dashboard_example")
+        filename = f"{dashboard_name}.json"
+        dashboard_description_file = os.path.join(self.dashboard_dir, filename)
+        return dashboard_description_file
+    
+
+    def create_dashboard(self, dashboard_description_file):
+        """
+        Create the dashboard from the configuration, and return it
+        """
+        # create dashboard
+        logging.info("Creating dashboard")
+
+        # get pool name and ticker
+        name, ticker = self.fetcher.pool_name_and_ticker(self.config["pool_id"])
+        value_dict = {
+            "pool_name": f" [{ticker}] {name} ",
+            "pool_id": self.config["pool_id"],
+        }
+
+        try:
+            dashboard_description = json.load(open(dashboard_description_file, "r"))
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Dashboard file {dashboard_description_file} not found.")
+        except json.JSONDecodeError:
+            raise ValueError(f"Dashboard file {dashboard_description_file} is not a valid json file.")
+        except Exception as e:
+            raise ValueError(f"Error reading dashboard file {dashboard_description_file}: {e}")
+
+        # update dashboard description with configuration values
+        dashboard_description = DashboardGenerator.update_dashboard_description(dashboard_description, value_dict)
+
+        # create dashboard
+        try:
+            dashboard = self.dashboard_generator.json_to_layout(dashboard_description)
+        except Exception as e:
+            raise ValueError(f"Error creating dashboard: {e}")
+
+        logging.info("Dashboard created")
+        return dashboard
+
+
+    def update_frame(self):
+        # update dashboard
+        self.mutex.acquire()
+        out = self.current_dashboard.render()
+        self.last_image = out
+        self.last_image_hash = hashlib.md5(out.tobytes()).hexdigest()
+        self.last_update_time = time.time()
+        self.mutex.release()
+
+    def render_loop(self):
+
+        dashboard_file = self.__get_dashboard_file_from_config()
+
+        self.mutex.acquire()
+        self.current_dashboard = self.create_dashboard(dashboard_file)
+        self.mutex.release()
+        if self.current_dashboard is None:
+            raise ValueError("Dashboard could not be created")
+    
+        self.update_frame()
+
+        while True:
+            now = time.time()
+            if now > self.last_update_time + self.refresh_interval_s:
+                logging.info("Updating frame")
+                self.update_frame()
+                # save output on disk
+                out = self.last_image#.transpose(Image.ROTATE_180)
+                out.save(os.path.join(self.output_dir, "frame.bmp"))
+                logging.info(f"Frame saved at: {self.output_dir} !")
+
+            # wait for the next refresh
+            time.sleep(1)
+
+
+    def start_socket_server(self, port):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.bind(("0.0.0.0", port))
+        self.server.listen(5)
+        logging.info(f"Socket server started on port {port}")
+
+        while True:
+            client_socket, addr = self.server.accept()
+            logging.info(f"Accepted connection from {addr}")
+            client_handler = threading.Thread(
+                target=DashboardManager.handle_client_connection,
+                args=(self, client_socket)
+            )
+            client_handler.start()
+
+    def stop_socket_server(self):
+        self.server.close()
+
+    def handle_client_connection(self, client_socket):
+        while True:
+            # read the request
+            request = client_socket.recv(1024).decode() 
+            if not request:
+                break
+
+            command, *args = request.split()
+            logging.info(type(command))
+            logging.info(f"Received command: {command}")
+            if command == DashboardCommand.LOAD_DASHBOARD.value:
+                dashboard_name = args[0]
+                dashboard_file = os.path.join(self.dashboard_dir, f"{dashboard_name}.json")
+                dashboard = self.create_dashboard(dashboard_file)
+                if dashboard is None:
+                    client_socket.send(b"Error creating dashboard\n")
+                else:
+                    # make sure to update the current dashboard in a thread-safe manner
+                    self.mutex.acquire()
+                    self.current_dashboard = dashboard
+                    # force an update of the frame
+                    self.last_update_time = time.time() - self.refresh_interval_s
+                    self.mutex.release()
+                    client_socket.send(b"Dashboard loaded\n")
+            elif command == DashboardCommand.GET_LAST_IMAGE.value:
+                if self.last_image is None:
+                    client_socket.sendall(struct.pack('!II', 0, 0))
+                    continue
+                    
+                img = self.last_image
+                img = img.convert("RGB")
+                img_bytes = img.tobytes()
+                img_size = len(img_bytes)
+                width, height = img.size
+                logging.info(f"Sending image with width: {width}, height: {height}, size: {img_size}")
+                # send the width, height, and size of the image first
+                client_socket.sendall(struct.pack('!II', width, height))
+                client_socket.sendall(struct.pack('!I', img_size))
+                # send the image data
+                client_socket.sendall(img_bytes)
+            elif command == DashboardCommand.GET_IMAGE_HASH.value:
+                client_socket.send(self.last_image_hash.encode() + b"\n")
+            else:
+                client_socket.send(b"Unknown command\n")
+
+        client_socket.close()
+
 
 
 def main():
     """
-    Main function, that reads the configuration, creates the dashboard, and updates it at regular intervals
+    Main function, to start the rendering loop and the socket server
     """
 
-    # read configuration
-    config = read_config()
-    logging.info(f"Configuration: {config}")
+    dashboard_manager = DashboardManager()
 
-    # extract configuration values
-    refresh_interval_s = config.get("refresh_interval_s", 60)
-    output_dir = config.get("output_dir", RESOURCES_DIR)
-    if output_dir is None:
-        output_dir = RESOURCES_DIR
+    # start the socket server
+    port = dashboard_manager.config.get("socket_port", 9999)
+    socket_thread = threading.Thread(target=dashboard_manager.start_socket_server, args=(port,))
+    socket_thread.start()
 
-    logging.info(f"Output directory: {output_dir}")
+    # start the rendering loop, matplotlib outside of the main thread will cause issues
+    # so render loop is started on main thread
+    try:
+        dashboard_manager.render_loop()
+    except KeyboardInterrupt:
+        logging.info("Keyboard interrupt received, stopping server")
+        dashboard_manager.stop_socket_server()
 
-    # create fetcher and generator
-    fetcher = DataFetcher(blockfrost_project_id=config["blockfrost_project_id"])
-    generator = DashboardGenerator(fetcher)
-
-    # create dashboard
-    logging.info("Creating dashboard")
-    dashboard = create_dashboard(fetcher, generator, config)
-    logging.info("Dashboard created")
-
-    while True:
-        # update dashboard
-        dashboard_img = dashboard.render()
-
-        # save output on disk
-        out = dashboard_img.transpose(Image.ROTATE_180)
-        out.save(os.path.join(output_dir, "frame.bmp"))
-        logging.info(f"{output_dir} SAVED!")
-
-        # wait for the next refresh
-        time.sleep(refresh_interval_s)
-
+    dashboard_manager.stop_socket_server()
 
 if __name__ == "__main__":
     main()

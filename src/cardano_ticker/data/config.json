@@ -4,5 +4,6 @@
     "pool_id": "pool138m7hevnvp664cmtralju857t5k7e4frpnaevtgpuykggr50kne",
     "blockfrost_project_id": "mainnet3LnDqKB0Yd299gaU4hnoWmJ0hUw60GTO",
     "output_dir": null,
-    "refresh_interval_s": 1500
+    "refresh_interval_s": 1500,
+    "socket_port": 8383
 }
