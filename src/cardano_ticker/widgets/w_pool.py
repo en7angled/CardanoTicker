@@ -72,10 +72,11 @@ class PoolStakeBarChart(BarChartWidget):
         pool_id,
         background_color=(0.7, 0.7, 0.7, 0.5),
         font_size=22,
+        text_color="black",
     ):
         self.datafetcher = datafetcher
         self.pool_id = pool_id
-        super().__init__(size, [], [], background_color=background_color, font_size=font_size)
+        super().__init__(size, [], [], background_color=background_color, font_size=font_size, text_color=text_color)
 
     def update(self):
         data = self.datafetcher.pool(self.pool_id)
@@ -84,13 +85,13 @@ class PoolStakeBarChart(BarChartWidget):
             ("Active Stake", int(data["active_stake"]) // 1e6),
             ("Live Pledge", int(data["live_pledge"]) // 1e6),
         ]
-        pie_chart_colors = ["blue", "green", "purple"]
+        pie_chart_colors = ["orange", "green", "yellow"]
         super().update(chart_data, pie_chart_colors)
 
 
 class SupplyPieChartWidget(PieChartWidget):
-    def __init__(self, data_fetcher, size, background_color=(0.3, 0.3, 0.3), font_size=20):
-        super().__init__(size, [], [], background_color, font_size=font_size)
+    def __init__(self, data_fetcher, size, background_color=(0.3, 0.3, 0.3), font_size=20, text_color="black"):
+        super().__init__(size, [], [], background_color, font_size=font_size, text_color=text_color)
         self.data_fetcher = data_fetcher
 
     def update(self):
@@ -102,5 +103,5 @@ class SupplyPieChartWidget(PieChartWidget):
             ("Treasury", int(data["supply"]["treasury"])),
             ("Reserves", int(data["supply"]["reserves"])),
         ]
-        bar_chart_colors = ["green", "blue", "purple", "orange"]
+        bar_chart_colors = ["green", "red", "purple", "orange"]
         super().update(chart_data, bar_chart_colors)

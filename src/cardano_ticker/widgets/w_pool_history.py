@@ -8,7 +8,9 @@ from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 
 class AdaPoolHistWidget(AbstractWidget):
-    def __init__(self, data_fetcher, size: Tuple[int, int], pool_id, background_color="white", font_size=25):
+    def __init__(
+        self, data_fetcher, size: Tuple[int, int], pool_id, background_color="white", font_size=25, text_color="black"
+    ):
         """
         Initialize the widget
         Args:
@@ -21,6 +23,8 @@ class AdaPoolHistWidget(AbstractWidget):
         self.pool_id = pool_id
         self.pool_data = self.data_fetcher.pool_history(self.pool_id)
         self.font_size = font_size
+        text_color = self._convert_color(text_color)
+        self.text_color = self._normalize_color(text_color)
 
     def update(self):
         """
@@ -56,8 +60,8 @@ class AdaPoolHistWidget(AbstractWidget):
         fig.set_size_inches(self.width / 100, self.height / 100)
 
         # Plot active stake
-        color = "tab:blue"
-        ax1.set_xlabel("Epoch", fontsize=self.font_size)
+        color = "orange"
+        ax1.set_xlabel("Epoch", fontsize=self.font_size, color=self.text_color)
 
         # set background color for the chart
         bk_color = np.array(self.background_color) / 255
@@ -69,13 +73,13 @@ class AdaPoolHistWidget(AbstractWidget):
         ax1.set_ylabel("Active Stake (B ADA)", color=color, fontsize=self.font_size)
         ax1.plot(epochs, active_stake, color=color, label="Active Stake", linewidth=linewidth)
         ax1.tick_params(axis="y", labelcolor=color, labelsize=self.font_size)
-        ax1.tick_params(axis="x", labelsize=self.font_size)
+        ax1.tick_params(axis="x", labelsize=self.font_size, colors=self.text_color)
         # ax1.legend(loc='upper left')
 
         # Plot rewards on a secondary y-axis
         ax2 = ax1.twinx()
-        color = self._normalize_color(self._convert_color("green"))
 
+        color = "green"
         ax2.set_ylabel("Rewards (M ADA)", color=color, fontsize=self.font_size)
         ax2.plot(epochs, rewards, color=color, label="Rewards", linestyle="--", linewidth=linewidth)
         ax2.tick_params(axis="y", labelcolor=color, labelsize=self.font_size)

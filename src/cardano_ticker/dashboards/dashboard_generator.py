@@ -105,6 +105,7 @@ class DashboardGenerator:
                     font_size=font_size,
                     header_orientation=widget_data["data"]["header_orientation"],
                     background_color=background_color,
+                    text_color=text_color,
                 )
             elif widget_type == "pool_stake_bar_chart":
                 widget = PoolStakeBarChart(
@@ -113,6 +114,7 @@ class DashboardGenerator:
                     widget_data["data"]["pool_id"],
                     font_size=font_size,
                     background_color=background_color,
+                    text_color=text_color,
                 )
             elif widget_type == "pool_history_chart":
                 widget = AdaPoolHistWidget(
@@ -120,6 +122,7 @@ class DashboardGenerator:
                     size,
                     widget_data["data"]["pool_id"],
                     background_color=background_color,
+                    text_color=text_color,
                     font_size=font_size,
                 )
             elif widget_type == "supply_pie_chart":
@@ -128,6 +131,7 @@ class DashboardGenerator:
                     size,
                     font_size=font_size,
                     background_color=background_color,
+                    text_color=text_color,
                 )
             elif widget_type == "text":
                 auto_aj = False if "auto_adjust_font" in widget_data["data"] else True

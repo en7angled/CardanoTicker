@@ -23,6 +23,7 @@ class BarChartWidget(AbstractWidget):
         title: str = None,
         background_color="white",
         font_size: int = 22,
+        text_color="black",
     ):
         super().__init__(size, background_color=background_color)
         self.data = data
@@ -33,6 +34,8 @@ class BarChartWidget(AbstractWidget):
 
         self.title = title
         self.render()
+        text_color = self._convert_color(text_color)
+        self.text_color = self._normalize_color(text_color)
 
     def update(self, data: List[Tuple[str, int]], colors: List[str]):
         self.data = data
@@ -55,6 +58,11 @@ class BarChartWidget(AbstractWidget):
 
         bk = self._normalize_color(self.background_color)
         fig.set_facecolor(bk)
+
+        # set labels color
+        ax.tick_params(axis='x', colors=self.text_color)
+        ax.tick_params(axis='y', colors=self.text_color)
+
         # make ax background transparent
         ax.patch.set_alpha(0)
         ax.bar(labels, values, color=self.colors)
@@ -86,6 +94,7 @@ class PieChartWidget(AbstractWidget):
         colors: List[str],
         background_color: str = "white",
         font_size: int = 22,
+        text_color="black",
     ):
         super().__init__(size, background_color=background_color)
         self.data = data
@@ -93,7 +102,8 @@ class PieChartWidget(AbstractWidget):
         # convert colors from uint8 to float
         self.colors = [self._normalize_color(color) for color in self.colors]
         self.font_size = font_size
-        self.render()
+        self.text_color = self._convert_color(text_color)
+        self.text_color = self._normalize_color(self.text_color)
 
     def update(self, data: List[Tuple[str, int]], colors: List[str]):
         self.data = data
@@ -113,6 +123,10 @@ class PieChartWidget(AbstractWidget):
         fig.set_facecolor(self._normalize_color(self.background_color))
         ax.pie(values, labels=labels, colors=self.colors, autopct="%1.1f%%", startangle=90)
         ax.axis("equal")
+
+        ax.tick_params(axis='x', colors=self.text_color)
+        ax.tick_params(axis='y', colors=self.text_color)
+
         # set slice text color
         # plt.setp(ax.pie(values, labels=labels, colors=self.colors, autopct='%1.1f%%', startangle=90)[1], size=20, color='white')
 

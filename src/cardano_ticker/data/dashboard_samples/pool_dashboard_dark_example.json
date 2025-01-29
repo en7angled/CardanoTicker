@@ -1,6 +1,6 @@
 {
     "canvas_size": [640, 400],
-    "background_color": "white",
+    "background_color": "blue",
     "dashboard": [
         {
             "type": "text",
@@ -10,8 +10,8 @@
                     "text": "@pool_name",
                     "auto_ajust_font_size": true
                     },
-            "text_color": "white",
-            "background_color": "blue"
+            "text_color": "blue",
+            "background_color": "black"
         },
         {
             "type": "date_text",
@@ -20,8 +20,8 @@
             "data": {
                 "font_size": 10
             },
-            "background_color": "blue",
-            "text_color": "white"
+            "background_color": "black",
+            "text_color": "blue"
         },
 
         {
@@ -33,8 +33,8 @@
                 "font_size": 11,
                 "header_orientation": "columns"
             },
-            "background_color": "white",
-            "text_color": "blue",
+            "background_color": "blue",
+            "text_color": "white",
             "header_color": "black"
         },
         {
@@ -45,7 +45,7 @@
                 "pool_id": "@pool_id",
                 "font_size": 8
             },
-            "background_color": "white"
+            "background_color": "blue"
         },
         {
             "type": "pool_history_chart",
@@ -55,7 +55,9 @@
                 "pool_id": "@pool_id",
                 "font_size": 8
             },
-            "background_color": "white"
+            "background_color": "blue",
+            "text_color": "white"
+
         },
         {
             "type": "ada_price",
@@ -64,8 +66,8 @@
             },
             "position": [0.3, 0.75],
             "size": [0.4, 0.2],
-            "text_color": "black",
-            "background_color": "white"
+            "text_color": "white",
+            "background_color": "blue"
         }
 
     ]
