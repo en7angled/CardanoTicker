@@ -38,7 +38,7 @@ class LCDDisplayHandler:
                 Himage = Image.open(self.frame_path)
 
                 # Ensure proper rotation (avoiding cropping)
-                rot = -90 if self.flip else 90
+                rot = -90 if self.flip is True else 90
                 Himage = Himage.rotate(rot, expand=True)  # Rotate and expand
 
                 # Resize image to fit LCD while preserving aspect ratio
