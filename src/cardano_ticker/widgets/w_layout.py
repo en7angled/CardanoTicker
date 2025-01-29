@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 from PIL import Image, ImageColor
 
+from cardano_ticker.utils.colors import Colors
 from cardano_ticker.widgets.generic.w_abstract import AbstractWidget
 
 # Initialize logging
@@ -20,7 +21,6 @@ class WidgetLayout:
         """
         self._widgets = []
         self.background_color = self._convert_color(background_color)
-
         self.resolution = grid_size
         self._canvas = Image.new("RGBA", self.resolution, self.background_color)
         self.grid_mask = np.zeros(self.resolution)
@@ -32,7 +32,13 @@ class WidgetLayout:
             color: The color to convert
         """
         if isinstance(color, str):
-            return ImageColor.getrgb(color)
+            # check if color is a predefined color
+            col = Colors.from_string(color)
+            if col is not None:
+                return col
+            else:
+                # convert color to RGB tuple using PIL
+                return ImageColor.getrgb(color)
         else:
             # convert color to int if tuple contains normalized values
             return tuple([int(255 * c) if c <= 1 else c for c in color])

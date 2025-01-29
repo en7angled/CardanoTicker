@@ -107,19 +107,28 @@ class DashboardManager:
     def update_frame(self):
         # update dashboard
         self.mutex.acquire()
-        out = self.current_dashboard.render()
-        self.last_image = out
-        self.last_image_hash = hashlib.md5(out.tobytes()).hexdigest()
-        self.last_update_time = time.time()
-        self.mutex.release()
+        try:
+            out = self.current_dashboard.render()
+            self.last_image = out
+            self.last_image_hash = hashlib.md5(out.tobytes()).hexdigest()
+            self.last_update_time = time.time()
+        finally:
+            self.mutex.release()
+
+        # save output on disk
+        out = self.last_image  # .transpose(Image.ROTATE_180)
+        out.save(os.path.join(self.output_dir, "frame.bmp"))
+        logging.info(f"Frame saved at: {self.output_dir} !")
 
     def render_loop(self):
 
         dashboard_file = self.__get_dashboard_file_from_config()
 
         self.mutex.acquire()
-        self.current_dashboard = self.create_dashboard(dashboard_file)
-        self.mutex.release()
+        try:
+            self.current_dashboard = self.create_dashboard(dashboard_file)
+        finally:
+            self.mutex.release()
         if self.current_dashboard is None:
             raise ValueError("Dashboard could not be created")
 
@@ -130,10 +139,6 @@ class DashboardManager:
             if now > self.last_update_time + self.refresh_interval_s:
                 logging.info("Updating frame")
                 self.update_frame()
-                # save output on disk
-                out = self.last_image  # .transpose(Image.ROTATE_180)
-                out.save(os.path.join(self.output_dir, "frame.bmp"))
-                logging.info(f"Frame saved at: {self.output_dir} !")
 
             # wait for the next refresh
             time.sleep(1)
