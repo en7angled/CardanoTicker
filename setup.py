@@ -32,6 +32,7 @@ setup(
     entry_points={
         "console_scripts": [
             "cardano-ticker-provider=cardano_ticker.dashboards.dashboard_provider:main",
+            "cardano-ticker-controller=cardano_ticker.dashboards.dashboard_controller:controller",
         ],
     },
 )

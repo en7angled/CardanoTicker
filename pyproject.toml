@@ -31,5 +31,5 @@ include-package-data = true
 cardano_ticker = ["data/**/*"]
 
 [project.scripts]
-cardano-ticker-provider = "cardano_ticker.dashboards.dashboard_provider:main"
 cardano-ticker-controller = "cardano_ticker.dashboards.dashboard_controller:controller"
+cardano-ticker-provider = "cardano_ticker.dashboards.dashboard_provider:main"

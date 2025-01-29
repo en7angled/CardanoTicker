@@ -1,11 +1,13 @@
-import socket
-import logging
 import cmd
+import logging
+import socket
 import struct
+
 from PIL import Image
 
-from cardano_ticker.dashboards.dashboard_commands import DashboardCommand
 from cardano_ticker.dashboards.config import read_config
+from cardano_ticker.dashboards.dashboard_commands import DashboardCommand
+
 
 # create a dashboard controller client that can send commands to the dashboard manager
 class DashboardController:
@@ -29,10 +31,7 @@ class DashboardController:
         """
         self.send_command(DashboardCommand.LOAD_DASHBOARD, [dashboard_name])
         response = self.socket.recv(1024).decode().strip()
-        if response == "Dashboard loaded":
-            return True
-        else:
-            return False
+        logging.info(f"Received response: {response}")
 
     def get_last_image(self):
         """
@@ -40,7 +39,7 @@ class DashboardController:
         """
         self.send_command(DashboardCommand.GET_LAST_IMAGE)
         return self.receive_image()
-    
+
     def get_last_image_hash(self):
         """
         Get the hash of the last image from the dashboard manager
@@ -48,8 +47,8 @@ class DashboardController:
         self.send_command(DashboardCommand.GET_IMAGE_HASH)
         return self.socket.recv(1024).decode().strip()
 
-
     def receive_image(self):
+
         # receive the width and height of the image
         width, height = struct.unpack('!II', self.socket.recv(8))
         if width == 0 or height == 0:
@@ -72,6 +71,7 @@ class DashboardController:
 
     def close(self):
         self.socket.close()
+
 
 class DashboardControllerCLI(cmd.Cmd):
     intro = 'Welcome to the Dashboard Controller CLI. Type help or ? to list commands.\n'
@@ -96,8 +96,8 @@ class DashboardControllerCLI(cmd.Cmd):
 
     def do_change_dashboard(self, arg):
         'Change the dashboard to the specified dashboard name.'
-        self.controller.change_dashboard(arg)
         print(f"Changed dashboard to {arg}")
+        self.controller.change_dashboard(arg)
 
     def do_exit(self, arg):
         'Exit the CLI.'
@@ -114,8 +114,9 @@ def controller():
     config = read_config()
     port = config.get("socket_port", 9999)
 
-    logging.info("Starting dashboard controller client")
+    logging.info("Starting dashboard controller client, port: %d", port)
     DashboardControllerCLI("localhost", port).cmdloop()
+
 
 if __name__ == "__main__":
     controller()

@@ -1,26 +1,26 @@
+import hashlib
 import json
 import logging
 import os
+import socket
+import struct
 import sys
+import threading
 import time
 
-from PIL import Image
-import socket
-import threading
-import hashlib
-import struct
-
+from cardano_ticker.dashboards.config import read_config
+from cardano_ticker.dashboards.dashboard_commands import (
+    DashboardCommand,
+    DashboardResponses,
+)
 from cardano_ticker.dashboards.dashboard_generator import DashboardGenerator
 from cardano_ticker.data_fetcher.data_fetcher import DataFetcher
-from cardano_ticker.dashboards.config import read_config
 from cardano_ticker.utils.constants import RESOURCES_DIR
-from cardano_ticker.dashboards.dashboard_commands import DashboardCommand
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__))))
 
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
-
 
 
 class DashboardManager:
@@ -55,7 +55,6 @@ class DashboardManager:
         self.mutex = threading.Lock()
         self.last_image = None
 
-
     def __get_dashboard_file_from_config(self):
         """
         Get the dashboard file from the configuration
@@ -65,7 +64,6 @@ class DashboardManager:
         filename = f"{dashboard_name}.json"
         dashboard_description_file = os.path.join(self.dashboard_dir, filename)
         return dashboard_description_file
-    
 
     def create_dashboard(self, dashboard_description_file):
         """
@@ -84,11 +82,14 @@ class DashboardManager:
         try:
             dashboard_description = json.load(open(dashboard_description_file, "r"))
         except FileNotFoundError:
-            raise FileNotFoundError(f"Dashboard file {dashboard_description_file} not found.")
+            logging.error(f"Dashboard file {dashboard_description_file} not found.")
+            return None
         except json.JSONDecodeError:
-            raise ValueError(f"Dashboard file {dashboard_description_file} is not a valid json file.")
+            logging.error(f"Dashboard file {dashboard_description_file} is not a valid json file.")
+            return None
         except Exception as e:
-            raise ValueError(f"Error reading dashboard file {dashboard_description_file}: {e}")
+            logging.error(f"Error reading dashboard file {dashboard_description_file}: {e}")
+            return None
 
         # update dashboard description with configuration values
         dashboard_description = DashboardGenerator.update_dashboard_description(dashboard_description, value_dict)
@@ -97,11 +98,11 @@ class DashboardManager:
         try:
             dashboard = self.dashboard_generator.json_to_layout(dashboard_description)
         except Exception as e:
-            raise ValueError(f"Error creating dashboard: {e}")
+            logging.error(f"Error creating dashboard: {e}")
+            return None
 
         logging.info("Dashboard created")
         return dashboard
-
 
     def update_frame(self):
         # update dashboard
@@ -121,7 +122,7 @@ class DashboardManager:
         self.mutex.release()
         if self.current_dashboard is None:
             raise ValueError("Dashboard could not be created")
-    
+
         self.update_frame()
 
         while True:
@@ -130,13 +131,12 @@ class DashboardManager:
                 logging.info("Updating frame")
                 self.update_frame()
                 # save output on disk
-                out = self.last_image#.transpose(Image.ROTATE_180)
+                out = self.last_image  # .transpose(Image.ROTATE_180)
                 out.save(os.path.join(self.output_dir, "frame.bmp"))
                 logging.info(f"Frame saved at: {self.output_dir} !")
 
             # wait for the next refresh
             time.sleep(1)
-
 
     def start_socket_server(self, port):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,8 +148,7 @@ class DashboardManager:
             client_socket, addr = self.server.accept()
             logging.info(f"Accepted connection from {addr}")
             client_handler = threading.Thread(
-                target=DashboardManager.handle_client_connection,
-                args=(self, client_socket)
+                target=DashboardManager.handle_client_connection, args=(self, client_socket)
             )
             client_handler.start()
 
@@ -159,7 +158,7 @@ class DashboardManager:
     def handle_client_connection(self, client_socket):
         while True:
             # read the request
-            request = client_socket.recv(1024).decode() 
+            request = client_socket.recv(1024).decode()
             if not request:
                 break
 
@@ -167,11 +166,16 @@ class DashboardManager:
             logging.info(type(command))
             logging.info(f"Received command: {command}")
             if command == DashboardCommand.LOAD_DASHBOARD.value:
+                if len(args) != 1:
+                    response = DashboardResponses.INVALID_ARGUMENTS.value
+                    client_socket.send(response.encode())
+                    continue
                 dashboard_name = args[0]
                 dashboard_file = os.path.join(self.dashboard_dir, f"{dashboard_name}.json")
                 dashboard = self.create_dashboard(dashboard_file)
                 if dashboard is None:
-                    client_socket.send(b"Error creating dashboard\n")
+                    logging.error("Error creating dashboard")
+                    client_socket.send(DashboardResponses.ERROR_CREATING_DASHBOARD.value.encode())
                 else:
                     # make sure to update the current dashboard in a thread-safe manner
                     self.mutex.acquire()
@@ -179,30 +183,22 @@ class DashboardManager:
                     # force an update of the frame
                     self.last_update_time = time.time() - self.refresh_interval_s
                     self.mutex.release()
-                    client_socket.send(b"Dashboard loaded\n")
+                    client_socket.send(DashboardResponses.DASHBOARD_LOADED.value.encode())
             elif command == DashboardCommand.GET_LAST_IMAGE.value:
                 if self.last_image is None:
                     client_socket.sendall(struct.pack('!II', 0, 0))
                     continue
-                    
-                img = self.last_image
-                img = img.convert("RGB")
-                img_bytes = img.tobytes()
-                img_size = len(img_bytes)
-                width, height = img.size
-                logging.info(f"Sending image with width: {width}, height: {height}, size: {img_size}")
-                # send the width, height, and size of the image first
-                client_socket.sendall(struct.pack('!II', width, height))
-                client_socket.sendall(struct.pack('!I', img_size))
-                # send the image data
-                client_socket.sendall(img_bytes)
+
+                resp_data = DashboardResponses.get_image_response(self.last_image)
+                for resp in resp_data:
+                    client_socket.sendall(resp)
             elif command == DashboardCommand.GET_IMAGE_HASH.value:
-                client_socket.send(self.last_image_hash.encode() + b"\n")
+                resp = DashboardResponses.get_image_hash_response(self.last_image_hash)
+                client_socket.send(resp)
             else:
-                client_socket.send(b"Unknown command\n")
+                client_socket.send(DashboardResponses.UNKNOWN_COMMAND.value.encode())
 
         client_socket.close()
-
 
 
 def main():
@@ -226,6 +222,7 @@ def main():
         dashboard_manager.stop_socket_server()
 
     dashboard_manager.stop_socket_server()
+
 
 if __name__ == "__main__":
     main()
