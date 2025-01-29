@@ -9,9 +9,35 @@ trap 'echo "Error occurred at line $LINENO. Exiting..." >&2' ERR
 # Get the directory of the current script
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 REPO_DIR=$(realpath "$SCRIPT_DIR/..")
-echo  $REPO_DIR
+echo  "Repository Directory: $REPO_DIR"
+
 # Get the current username
 CURRENT_USER=$(whoami)
+
+# Prompt the user for display type
+echo "Which display type do you want to set up?"
+echo "Type 'lcd' for an LCD display or 'epaper' for an e-paper display."
+read -r DISPLAY_TYPE
+
+# Ensure valid selection
+if [[ "$DISPLAY_TYPE" != "lcd" && "$DISPLAY_TYPE" != "epaper" ]]; then
+  echo "Invalid choice. Please restart and enter 'lcd' or 'epaper'."
+  exit 1
+fi
+
+# If LCD is selected, ask for resolution
+if [[ "$DISPLAY_TYPE" == "lcd" ]]; then
+  echo "Enter the LCD resolution width (e.g., 800):"
+  read -r LCD_WIDTH
+  echo "Enter the LCD resolution height (e.g., 480):"
+  read -r LCD_HEIGHT
+
+  # Ensure width and height are numbers
+  if ! [[ "$LCD_WIDTH" =~ ^[0-9]+$ ]] || ! [[ "$LCD_HEIGHT" =~ ^[0-9]+$ ]]; then
+    echo "Error: Resolution width and height must be numeric values."
+    exit 1
+  fi
+fi
 
 # Prompt the user to choose virtual environment setup
 echo "Do you want to use a virtual environment for installation?"
@@ -46,42 +72,31 @@ if [[ "$USE_VENV" == "yes" ]]; then
   cd $REPO_DIR
   # Install provider dependencies
   echo "Installing provider dependencies..."
-  if pip install .; then
-    echo "Provider dependencies installed successfully."
-  else
-    echo "Error: Failed to install provider dependencies." >&2
-    exit 1
-  fi
+  pip install . || { echo "Error: Failed to install provider dependencies." >&2; exit 1; }
 
   # Install display dependencies
   echo "Installing display dependencies..."
-  cd ./src/displayers/waveshare || exit
-  if pip install -r requirements.txt; then
-    echo "Display dependencies installed successfully."
+  if [[ "$DISPLAY_TYPE" == "epaper" ]]; then
+    cd ./src/displayers/waveshare || exit
   else
-    echo "Error: Failed to install display dependencies." >&2
-    exit 1
+    cd ./src/displayers/lcd || exit
   fi
+  pip install -r requirements.txt || { echo "Error: Failed to install display dependencies." >&2; exit 1; }
+
 else
   cd $REPO_DIR
-  # System-wide installation with --break-system-packages
+  # System-wide installation
   echo "Installing system-wide with --break-system-packages..."
-  if pip install . --break-system-packages; then
-    echo "Provider dependencies installed successfully."
-  else
-    echo "Error: Failed to install provider dependencies." >&2
-    exit 1
-  fi
+  pip install . --break-system-packages || { echo "Error: Failed to install provider dependencies." >&2; exit 1; }
 
   # Install display dependencies system-wide
   echo "Installing display dependencies system-wide..."
-  cd ./src/displayers/waveshare || exit
-  if pip install -r requirements.txt --break-system-packages; then
-    echo "Display dependencies installed successfully."
+  if [[ "$DISPLAY_TYPE" == "epaper" ]]; then
+    cd ./src/displayers/waveshare || exit
   else
-    echo "Error: Failed to install display dependencies." >&2
-    exit 1
+    cd ./src/displayers/lcd || exit
   fi
+  pip install -r requirements.txt --break-system-packages || { echo "Error: Failed to install display dependencies." >&2; exit 1; }
 fi
 
 # Copy and edit config
@@ -125,7 +140,13 @@ sudo systemctl enable cardano-ticker-provider
 sudo systemctl start cardano-ticker-provider
 echo "Provider service set up and started successfully."
 
-# Create displayer systemd service
+# Create display systemd service based on selection
+if [[ "$DISPLAY_TYPE" == "epaper" ]]; then
+  DISPLAY_SCRIPT="src/displayers/waveshare/display.py epd4in01f $REPO_DIR/src/cardano_ticker/data/frame.bmp"
+else
+  DISPLAY_SCRIPT="src/displayers/lcd/display.py $REPO_DIR/src/cardano_ticker/data/frame.bmp $LCD_WIDTH $LCD_HEIGHT true"
+fi
+
 echo "Creating displayer systemd service..."
 sudo bash -c "cat <<EOF > /etc/systemd/system/cardano-ticker-displayer.service
 [Unit]
@@ -133,8 +154,8 @@ Description=Cardano Ticker Displayer
 After=network.target
 
 [Service]
-ExecStart=$([[ "$USE_VENV" == "yes" ]] && echo "$VENV_DIR/bin/python" || echo "/usr/bin/python3") $REPO_DIR/src/displayers/waveshare/display.py epd4in01f $REPO_DIR/src/cardano_ticker/data/frame.bmp
-WorkingDirectory=$REPO_DIR/src/displayers/waveshare
+ExecStart=$([[ "$USE_VENV" == "yes" ]] && echo "$VENV_DIR/bin/python" || echo "/usr/bin/python3") $REPO_DIR/$DISPLAY_SCRIPT
+WorkingDirectory=$REPO_DIR
 Restart=always
 User=$CURRENT_USER
 Group=$(id -gn $CURRENT_USER)
@@ -142,6 +163,7 @@ Group=$(id -gn $CURRENT_USER)
 [Install]
 WantedBy=multi-user.target
 EOF"
+
 sudo systemctl daemon-reload
 sudo systemctl enable cardano-ticker-displayer
 sudo systemctl start cardano-ticker-displayer
