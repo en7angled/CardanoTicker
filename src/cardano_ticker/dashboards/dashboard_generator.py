@@ -91,6 +91,7 @@ class DashboardGenerator:
                     symbol=widget_data["data"]["symbol"],
                     currency=widget_data["data"]["currency"],
                     background_color=background_color,
+                    text_color=text_color,
                     increasing_line_color=inc_col,
                     decreasing_line_color=dec_col,
                 )

@@ -20,6 +20,7 @@ class PlotChart(AbstractWidget):
         increasing_line_color="green",
         decreasing_line_color="red",
         background_color="white",
+        text_color="black",
     ):
         """
         Initialize the widget
@@ -43,6 +44,8 @@ class PlotChart(AbstractWidget):
 
         self._increasing_line_color = increasing_line_color
         self._decreasing_line_color = decreasing_line_color
+        text_color = self._convert_color(text_color)
+        self.text_color = self._normalize_color(text_color)
 
     def __validate_prices(self):
         """
@@ -113,9 +116,9 @@ class PlotChart(AbstractWidget):
         # 6x10 for 320x320
         font_xy = 6.5 * self.width / 320, 10 * self.height / 320
 
-        plt.xticks(rotation=0, ha="center", fontsize=font_xy[0])
-        plt.grid(color="black", linestyle="--", linewidth=1)
-        plt.yticks(rotation=0, ha="right", fontsize=font_xy[1])
+        plt.xticks(rotation=0, ha="center", fontsize=font_xy[0], color=self.text_color)
+        plt.grid(color=self.text_color, linestyle="--", linewidth=1)
+        plt.yticks(rotation=0, ha="right", fontsize=font_xy[1], color=self.text_color)
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%b-%d"))
 
         #   plt.axhline(y = current_price, color = 'r', linewidth=10, linestyle = '--')
