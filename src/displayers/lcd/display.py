@@ -12,12 +12,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 class LCDDisplayHandler:
-    def __init__(self, frame_path, lcd_width, lcd_height):
+    def __init__(self, frame_path, lcd_width, lcd_height, flip=False):
         """Initialize the display handler with the frame path and LCD resolution."""
         self.frame_path = frame_path
         self.lcd_width = lcd_width
         self.lcd_height = lcd_height
         self.cached_moddate = -1
+        self.flip = flip
 
         # Ensure previous fbi processes are killed to avoid conflicts
         os.system("sudo pkill fbi")
@@ -37,7 +38,8 @@ class LCDDisplayHandler:
                 Himage = Image.open(self.frame_path)
 
                 # Ensure proper rotation (avoiding cropping)
-                Himage = Himage.rotate(90, expand=True)  # Rotate and expand
+                rot = 270 if self.flip else 90
+                Himage = Himage.rotate(rot, expand=True)  # Rotate and expand
 
                 # Resize image to fit LCD while preserving aspect ratio
                 Himage.thumbnail((self.lcd_width, self.lcd_height), Image.LANCZOS)
@@ -69,7 +71,7 @@ class LCDDisplayHandler:
 
 
 # Main function
-def main(frame_path, lcd_width, lcd_height):
+def main(frame_path, lcd_width, lcd_height, flip=False):
     handler = LCDDisplayHandler(frame_path, lcd_width, lcd_height)
     handler.init_display()
     try:
@@ -87,9 +89,14 @@ if __name__ == "__main__":
     frame_path_arg = sys.argv[1]
     lcd_width_arg = int(sys.argv[2])
     lcd_height_arg = int(sys.argv[3])
+    flip_arg = False
+    if len(sys.argv) == 5:
+        flip_arg = sys.argv[4].lower()
+        if flip_arg == "true":
+            flip_arg = True
 
     if not os.path.exists(frame_path_arg):
         print(f"Error: Frame path does not exist: {frame_path_arg}")
         sys.exit(1)
 
-    main(frame_path_arg, lcd_width_arg, lcd_height_arg)
+    main(frame_path_arg, lcd_width_arg, lcd_height_arg, flip_arg)
