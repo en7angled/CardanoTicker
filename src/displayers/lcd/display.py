@@ -10,18 +10,22 @@ from PIL import Image
 # Initialize logging
 logging.basicConfig(level=logging.INFO)
 
-# Display handler class
+
 class LCDDisplayHandler:
-    def __init__(self, frame_path):
-        """Initialize the display handler with the frame path."""
+    def __init__(self, frame_path, lcd_width, lcd_height):
+        """Initialize the display handler with the frame path and LCD resolution."""
         self.frame_path = frame_path
+        self.lcd_width = lcd_width
+        self.lcd_height = lcd_height
         self.cached_moddate = -1
+
+        # Ensure previous fbi processes are killed to avoid conflicts
+        os.system("sudo pkill fbi")
 
     def init_display(self):
         """Initialize the display."""
         logging.info("Initializing LCD display")
-        # Clear previous images
-        os.system("sudo fbi -T 1 -noverbose -a /dev/zero")
+        os.system(f"sudo fbi -T 1 -d /dev/fb0 -noverbose -a {self.frame_path} &")
 
     def refresh_display(self):
         """Refresh the display with the updated frame."""
@@ -32,16 +36,22 @@ class LCDDisplayHandler:
                 logging.info("Loading image")
                 Himage = Image.open(self.frame_path)
 
-                # Optionally rotate if needed
-                Himage = Himage.rotate(0)  # Change this to 90, 180, or 270 if needed
+                # Ensure proper rotation (avoiding cropping)
+                Himage = Himage.rotate(90, expand=True)  # Rotate and expand
+
+                # Resize image to fit LCD while preserving aspect ratio
+                Himage.thumbnail((self.lcd_width, self.lcd_height), Image.LANCZOS)
 
                 # Save the temporary image
                 temp_image_path = "/tmp/lcd_display.bmp"
                 Himage.save(temp_image_path)
 
-                # Use fbi to display the image on the screen
-                logging.info("Displaying image on LCD")
-                os.system(f"sudo fbi -T 1 -noverbose -a {temp_image_path}")
+                # Kill any existing fbi process to refresh properly
+                os.system("sudo pkill fbi")
+
+                # Use fbi to display the image persistently (fullscreen auto-scale)
+                logging.info(f"Displaying image on LCD ({self.lcd_width}x{self.lcd_height})")
+                os.system(f"sudo fbi -T 1 -d /dev/fb0 -noverbose -a {temp_image_path} &")
 
                 print("Refreshed:", time.ctime(moddate))
             except IOError as e:
@@ -54,13 +64,13 @@ class LCDDisplayHandler:
     def cleanup(self):
         """Cleanup display resources."""
         logging.info("Exiting and cleaning up")
-        os.system("sudo pkill fbi")  # Kill fbi process
+        os.system("sudo pkill fbi")  # Kill fbi process before exiting
         exit()
 
 
 # Main function
-def main(frame_path):
-    handler = LCDDisplayHandler(frame_path)
+def main(frame_path, lcd_width, lcd_height):
+    handler = LCDDisplayHandler(frame_path, lcd_width, lcd_height)
     handler.init_display()
     try:
         while True:
@@ -70,14 +80,16 @@ def main(frame_path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python lcd_display.py <frame_path>")
+    if len(sys.argv) < 4:
+        print("Usage: python lcd_display.py <frame_path> <lcd_width> <lcd_height>")
         sys.exit(1)
 
     frame_path_arg = sys.argv[1]
+    lcd_width_arg = int(sys.argv[2])
+    lcd_height_arg = int(sys.argv[3])
 
     if not os.path.exists(frame_path_arg):
         print(f"Error: Frame path does not exist: {frame_path_arg}")
         sys.exit(1)
 
-    main(frame_path_arg)
+    main(frame_path_arg, lcd_width_arg, lcd_height_arg)

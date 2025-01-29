@@ -10,7 +10,7 @@
                     "text": "@pool_name",
                     "auto_ajust_font_size": true
                     },
-            "text_color": "blue",
+            "text_color": "white",
             "background_color": "black"
         },
         {
@@ -20,8 +20,8 @@
             "data": {
                 "font_size": 10
             },
-            "background_color": "black",
-            "text_color": "blue"
+            "text_color": "white",
+            "background_color": "black"
         },
 
         {
