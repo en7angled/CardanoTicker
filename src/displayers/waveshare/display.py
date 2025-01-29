@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding:utf-8 -*-
-import sys
-import os
 import logging
+import os
+import sys
 import time
-from PIL import Image
+
 import numpy as np
+from PIL import Image
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG)
@@ -16,12 +17,12 @@ IMG_HW = (400, 640)
 # Define label colors
 LABEL_COLORS = [
     [255, 255, 255],  # white
-    [255, 0, 0],      # red
-    [0, 0, 255],      # blue
-    [255, 255, 0],    # yellow
-    [0, 255, 0],      # green
-    [255, 128, 0],    # orange
-    [70, 70, 70],     # black
+    [255, 0, 0],  # red
+    [0, 0, 255],  # blue
+    [255, 255, 0],  # yellow
+    [0, 255, 0],  # green
+    [255, 128, 0],  # orange
+    [70, 70, 70],  # black
 ]
 
 # Quantize image to the closest colors
@@ -32,6 +33,7 @@ def closest(colors, image):
     distances = np.argmin(np.array([np.sqrt(np.sum((color - image) ** 2, axis=2)) for color in colors]), axis=0)
     colors[-1, :] = np.array([0, 0, 0])  # Black for any unmatched pixels
     return colors[distances].astype(np.uint8)
+
 
 # Display handler class
 class DisplayHandler:
@@ -76,7 +78,10 @@ class DisplayHandler:
                 logging.info("Quantizing image")
                 quantised = closest(LABEL_COLORS, np.array(Himage))
                 logging.info("Displaying image")
-                self.epd.display(self.epd.getbuffer(Image.fromarray(quantised)))
+                img = Image.fromarray(quantised)
+                # transpose image
+                img = img.transpose(Image.ROTATE_180)
+                self.epd.display(self.epd.getbuffer(img))
                 print("Refreshed:", time.ctime(moddate))
             except IOError as e:
                 logging.error(f"IOError during display refresh: {e}")
@@ -84,6 +89,7 @@ class DisplayHandler:
                 self.cleanup()
         else:
             time.sleep(10)
+
 
 # Main function
 def main(display_type, frame_path):
@@ -94,6 +100,7 @@ def main(display_type, frame_path):
             handler.refresh_display()
     except KeyboardInterrupt:
         handler.cleanup()
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
