@@ -39,6 +39,27 @@ if [[ "$DISPLAY_TYPE" == "lcd" ]]; then
   fi
 fi
 
+# If e-paper is selected, ask for resolution and display type
+if [[ "$DISPLAY_TYPE" == "epaper" ]]; then
+  echo "Enter the e-paper resolution width (e.g., 640):"
+  read -r EPAPER_WIDTH
+  echo "Enter the e-paper resolution height (e.g., 400):"
+  read -r EPAPER_HEIGHT
+  echo "Enter the e-paper display type (default: epd4in01f):"
+  read -r EPAPER_TYPE
+
+  # Use default display type if empty
+  if [[ -z "$EPAPER_TYPE" ]]; then
+    EPAPER_TYPE="epd4in01f"
+  fi
+
+  # Ensure width and height are numbers
+  if ! [[ "$EPAPER_WIDTH" =~ ^[0-9]+$ ]] || ! [[ "$EPAPER_HEIGHT" =~ ^[0-9]+$ ]]; then
+    echo "Error: Resolution width and height must be numeric values."
+    exit 1
+  fi
+fi
+
 # Prompt the user to choose virtual environment setup
 echo "Do you want to use a virtual environment for installation?"
 echo "Type 'yes' to use venv or 'no' to install system-wide with --break-system-packages:  (recommended for Raspberry Pi Zero)"
@@ -122,7 +143,8 @@ echo "Creating provider systemd service..."
 sudo bash -c "cat <<EOF > /etc/systemd/system/cardano-ticker-provider.service
 [Unit]
 Description=Cardano Ticker Provider
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 ExecStart=$([[ "$USE_VENV" == "yes" ]] && echo "$VENV_DIR/bin/python" || echo "/usr/bin/python3")  "$REPO_DIR/src/cardano_ticker/dashboards/dashboard_provider.py"
@@ -142,9 +164,9 @@ echo "Provider service set up and started successfully."
 
 # Create display systemd service based on selection
 if [[ "$DISPLAY_TYPE" == "epaper" ]]; then
-  DISPLAY_SCRIPT="src/displayers/waveshare/display.py epd4in01f $REPO_DIR/src/cardano_ticker/data/frame.bmp"
+  DISPLAY_SCRIPT="src/displayers/waveshare/display.py $EPAPER_TYPE $REPO_DIR/src/cardano_ticker/data/frame.bmp $EPAPER_WIDTH $EPAPER_HEIGHT"
 else
-  DISPLAY_SCRIPT="src/displayers/lcd/display.py $REPO_DIR/src/cardano_ticker/data/frame.bmp $LCD_WIDTH $LCD_HEIGHT true"
+  DISPLAY_SCRIPT="src/displayers/lcd/display.py $REPO_DIR/src/cardano_ticker/data/frame.bmp $LCD_WIDTH $LCD_HEIGHT"
 fi
 
 echo "Creating displayer systemd service..."
