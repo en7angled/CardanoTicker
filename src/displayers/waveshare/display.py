@@ -11,8 +11,6 @@ from PIL import Image
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Image dimensions (height, width)
-IMG_HW = (400, 640)
 
 # Define label colors
 LABEL_COLORS = [
@@ -37,11 +35,13 @@ def closest(colors, image):
 
 # Display handler class
 class DisplayHandler:
-    def __init__(self, display_type, frame_path):
+    def __init__(self, display_type, frame_path, width, height):
         """Initialize the display handler with the specified display type and frame path."""
         self.display_type = display_type
         self.frame_path = frame_path
         self.cached_moddate = -1
+        self.width = width
+        self.height = height
 
         # Initialize the appropriate display
         self.epaper = __import__("epaper")
@@ -75,6 +75,7 @@ class DisplayHandler:
                 self.epd.Clear()
                 logging.info("Loading image")
                 Himage = Image.open(self.frame_path)
+                Himage = Himage.resize((self.width, self.height))
                 logging.info("Quantizing image")
                 quantised = closest(LABEL_COLORS, np.array(Himage))
                 logging.info("Displaying image")
@@ -92,8 +93,8 @@ class DisplayHandler:
 
 
 # Main function
-def main(display_type, frame_path):
-    handler = DisplayHandler(display_type, frame_path)
+def main(display_type, frame_path, width, height):
+    handler = DisplayHandler(display_type, frame_path, width, height)
     handler.init_display()
     try:
         while True:
@@ -103,15 +104,17 @@ def main(display_type, frame_path):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python display.py <display_type> <frame_path>")
+    if len(sys.argv) < 5:
+        print("Usage: python display.py <display_type> <frame_path> <width> <height>")
         sys.exit(1)
 
     display_type_arg = sys.argv[1]
     frame_path_arg = sys.argv[2]
+    width_arg = int(sys.argv[3])
+    height_arg = int(sys.argv[4])
 
     if not os.path.exists(frame_path_arg):
         print(f"Error: Frame path does not exist: {frame_path_arg}")
         sys.exit(1)
 
-    main(display_type_arg, frame_path_arg)
+    main(display_type_arg, frame_path_arg, width_arg, height_arg)
