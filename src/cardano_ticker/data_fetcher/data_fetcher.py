@@ -1,3 +1,4 @@
+import logging
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -5,6 +6,8 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 from blockfrost import ApiError, ApiUrls, BlockFrostApi
+
+logging.basicConfig(level=logging.INFO)
 
 
 class DataFetcher:
@@ -29,7 +32,13 @@ class DataFetcher:
     def get_realtime(self, symbol, currency):
         api_url = f"https://min-api.cryptocompare.com/data/price?fsym={symbol}&tsyms={currency}&api_key={self.api_key}"
         raw = requests.get(api_url).json()
-        return float(raw[currency])
+
+        # check if the response contains the currency we are looking for
+        if currency in raw:
+            return raw[currency]
+        else:
+            logging.error(f"Currency {currency} not found in the response: {raw}")
+            return 0
 
     def pool(self, pool_id):
         return self.blockfrost_api.pool(pool_id, return_type="json")
