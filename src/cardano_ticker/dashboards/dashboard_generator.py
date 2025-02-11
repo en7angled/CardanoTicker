@@ -82,12 +82,15 @@ class DashboardGenerator:
                     text_color=text_color,
                 )
             elif widget_type == "plot_chart":
-                inc_col = widget_data["increasing_line_color"] if "increasing_line_color" in widget_data else "green"
-                dec_col = widget_data["decreasing_line_color"] if "decreasing_line_color" in widget_data else "red"
+                # get the colors
+                inc_col = widget_data.get("increasing_line_color", "green")
+                dec_col = widget_data.get("decreasing_line_color", "red")
+                title = widget_data.get("title", None)
 
                 widget = PlotChart(
                     data_fetcher,
                     size,
+                    title=title,
                     symbol=widget_data["data"]["symbol"],
                     currency=widget_data["data"]["currency"],
                     background_color=background_color,

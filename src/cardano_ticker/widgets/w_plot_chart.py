@@ -21,6 +21,7 @@ class PlotChart(AbstractWidget):
         decreasing_line_color="red",
         background_color="white",
         text_color="black",
+        title=None,
     ):
         """
         Initialize the widget
@@ -46,6 +47,7 @@ class PlotChart(AbstractWidget):
         self._decreasing_line_color = decreasing_line_color
         text_color = self._convert_color(text_color)
         self.text_color = self._normalize_color(text_color)
+        self.title = title
 
     def __validate_prices(self):
         """
@@ -115,6 +117,10 @@ class PlotChart(AbstractWidget):
 
         # 6x10 for 320x320
         font_xy = 6.5 * self.width / 320, 10 * self.height / 320
+
+        # set title
+        if self.title is not None:
+            plt.title(self.title, fontsize=font_xy[0], color=self.text_color)
 
         plt.xticks(rotation=0, ha="center", fontsize=font_xy[0], color=self.text_color)
         plt.grid(color=self.text_color, linestyle="--", linewidth=1)
