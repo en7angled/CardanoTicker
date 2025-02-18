@@ -3,42 +3,30 @@ import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-import pandas as pd
-import requests
 from blockfrost import ApiError, ApiUrls, BlockFrostApi
+
+from cardano_ticker.data_fetcher.crypto_price_fetcher import CryptoPriceFetcher
 
 logging.basicConfig(level=logging.INFO)
 
 
 class DataFetcher:
     def __init__(self, api_key="", blockfrost_project_id=""):
-        self.api_key = api_key
         blockfrost_id = os.getenv("BLOCKFROST_PROJECT_ID", default=blockfrost_project_id)
 
         self.blockfrost_api = BlockFrostApi(
             project_id=blockfrost_id,
             base_url=ApiUrls.mainnet.value,
         )
+
+        self.price_fetcher = CryptoPriceFetcher(api_key)
         self.cached_stats = None
 
     def get_chart_data(self, symbol, currency, days=7):
-
-        api_url = f"https://min-api.cryptocompare.com/data/v2/histoday?fsym={symbol}&tsym={currency}&limit={days}&api_key={self.api_key}"
-        raw = requests.get(api_url).json()
-        df = pd.DataFrame(raw["Data"]["Data"])[["time", "high", "low", "open", "close"]].set_index("time")
-        df.index = pd.to_datetime(df.index, unit="s")
-        return df
+        return self.price_fetcher.get_chart_data(symbol, currency, days)
 
     def get_realtime(self, symbol, currency):
-        api_url = f"https://min-api.cryptocompare.com/data/price?fsym={symbol}&tsyms={currency}&api_key={self.api_key}"
-        raw = requests.get(api_url).json()
-
-        # check if the response contains the currency we are looking for
-        if currency in raw:
-            return raw[currency]
-        else:
-            logging.error(f"Currency {currency} not found in the response: {raw}")
-            return 0
+        return self.price_fetcher.get_realtime(symbol, currency)
 
     def pool(self, pool_id):
         return self.blockfrost_api.pool(pool_id, return_type="json")
