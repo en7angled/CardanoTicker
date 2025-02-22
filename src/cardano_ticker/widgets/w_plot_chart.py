@@ -39,10 +39,6 @@ class PlotChart(AbstractWidget):
         self._symbol = symbol
         self._currency = currency
         self._prices = data_fetcher.get_chart_data(self._symbol, self._currency, 7)
-
-        if self.__validate_prices() is False:
-            raise ValueError("Invalid prices")
-
         self._increasing_line_color = increasing_line_color
         self._decreasing_line_color = decreasing_line_color
         text_color = self._convert_color(text_color)
@@ -53,11 +49,16 @@ class PlotChart(AbstractWidget):
         """
         Validate the prices
         """
-        assert isinstance(self._prices, pd.DataFrame), "Prices must be a pandas dataframe"
-        assert "open" in self._prices.columns, "Prices must have 'open' column"
-        assert "close" in self._prices.columns, "Prices must have 'close' column"
-        assert "high" in self._prices.columns, "Prices must have 'high' column"
-        assert "low" in self._prices.columns, "Prices must have 'low' column"
+        if not isinstance(self._prices, pd.DataFrame):
+            prices_type = type(self._prices)
+            raise TypeError(f"Prices must be a pandas DataFrame, instead got {prices_type}")
+
+        required_columns = {"open", "close", "high", "low"}
+        missing_columns = required_columns - set(self._prices.columns)
+
+        if missing_columns:
+            raise ValueError(f"Prices DataFrame is missing required columns: {', '.join(missing_columns)}")
+
         return True
 
     @staticmethod
@@ -76,7 +77,7 @@ class PlotChart(AbstractWidget):
         """
         self._prices = self.data_fetcher.get_chart_data(self._symbol, self._currency, 7)
         if self.__validate_prices() is False:
-            raise ValueError("Invalid prices")
+            return
         self.render()
 
     def render(self):
