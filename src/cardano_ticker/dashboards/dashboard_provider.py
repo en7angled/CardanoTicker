@@ -8,6 +8,8 @@ import sys
 import threading
 import time
 
+from flask import Flask, send_file
+
 from cardano_ticker.dashboards.config import read_config
 from cardano_ticker.dashboards.dashboard_commands import (
     DashboardCommand,
@@ -25,125 +27,126 @@ logging.basicConfig(level=logging.INFO)
 
 class DashboardManager:
     """
-    Class to manage the rendering of the dashboard, and the socket server
+    Class to manage the rendering of the dashboard, socket server, and HTTP server.
     """
 
-    def __init__(self) -> None:
-
-        # read configuration
+    def __init__(self):
+        # Read configuration
         self.config = read_config()
         logging.info(f"Configuration: {self.config}")
 
-        # extract configuration values
+        # Extract configuration values
         self.refresh_interval_s = self.config.get("refresh_interval_s", 60)
-        self.output_dir = self.config.get("output_dir", RESOURCES_DIR)
-        if self.output_dir is None:
-            self.output_dir = RESOURCES_DIR
+        self.output_dir = self.config.get("output_dir", RESOURCES_DIR) or RESOURCES_DIR
         logging.info(f"Output directory: {self.output_dir}")
 
         SAMPLES_DIR = os.path.join(RESOURCES_DIR, "dashboard_samples")
-        dashboard_dir = self.config.get("dashboard_path", SAMPLES_DIR)
-        if dashboard_dir is None:
-            dashboard_dir = SAMPLES_DIR
-        self.dashboard_dir = dashboard_dir
+        self.dashboard_dir = self.config.get("dashboard_path", SAMPLES_DIR) or SAMPLES_DIR
         logging.info(f"Dashboard directory: {self.dashboard_dir}")
 
-        # create fetcher and generator
+        # Create data fetcher and dashboard generator
         self.fetcher = DataFetcher(blockfrost_project_id=self.config["blockfrost_project_id"])
         self.dashboard_generator = DashboardGenerator(self.fetcher)
         self.current_dashboard = None
         self.mutex = threading.Lock()
         self.last_image = None
+        self.last_image_hash = None
+        self.last_update_time = None
+
+        # Create Flask app for HTTP server
+        self.app = Flask(__name__)
+
+        @self.app.route('/latest-image')
+        def get_latest_image():
+            """
+            HTTP Endpoint to serve the latest dashboard image.
+            """
+            image_path = os.path.join(self.output_dir, "frame.bmp")
+            if not os.path.exists(image_path):
+                return "No image available", 404
+            return send_file(image_path, mimetype='image/bmp')
 
     def __get_dashboard_file_from_config(self):
         """
-        Get the dashboard file from the configuration
+        Get the dashboard file from the configuration.
         """
-
         dashboard_name = self.config.get("dashboard_name", "price_dashboard_example")
-        filename = f"{dashboard_name}.json"
-        dashboard_description_file = os.path.join(self.dashboard_dir, filename)
-        return dashboard_description_file
+        return os.path.join(self.dashboard_dir, f"{dashboard_name}.json")
 
     def create_dashboard(self, dashboard_description_file):
         """
-        Create the dashboard from the configuration, and return it
+        Create the dashboard from the configuration and return it.
         """
-        # create dashboard
         logging.info("Creating dashboard")
 
-        # get pool name and ticker
+        # Get pool name and ticker
         name, ticker = self.fetcher.pool_name_and_ticker(self.config["pool_id"])
-        value_dict = {
-            "pool_name": f" [{ticker}] {name} ",
-            "pool_id": self.config["pool_id"],
-        }
+        value_dict = {"pool_name": f" [{ticker}] {name} ", "pool_id": self.config["pool_id"]}
 
         try:
             dashboard_description = json.load(open(dashboard_description_file, "r"))
-        except FileNotFoundError:
-            logging.error(f"Dashboard file {dashboard_description_file} not found.")
-            return None
-        except json.JSONDecodeError:
-            logging.error(f"Dashboard file {dashboard_description_file} is not a valid json file.")
-            return None
-        except Exception as e:
+        except (FileNotFoundError, json.JSONDecodeError) as e:
             logging.error(f"Error reading dashboard file {dashboard_description_file}: {e}")
             return None
 
-        # update dashboard description with configuration values
+        # Update dashboard description with configuration values
         dashboard_description = DashboardGenerator.update_dashboard_description(dashboard_description, value_dict)
 
-        # create dashboard
         try:
             dashboard = self.dashboard_generator.json_to_layout(dashboard_description)
         except Exception as e:
             logging.error(f"Error creating dashboard: {e}")
             return None
 
-        logging.info("Dashboard created")
+        logging.info("Dashboard created successfully.")
         return dashboard
 
     def update_frame(self):
-        # update dashboard
-        self.mutex.acquire()
-        try:
+        """
+        Render the dashboard and save it as an image.
+        """
+        with self.mutex:
             out = self.current_dashboard.render()
             self.last_image = out
             self.last_image_hash = hashlib.md5(out.tobytes()).hexdigest()
             self.last_update_time = time.time()
-        finally:
-            self.mutex.release()
 
-        # save output on disk
-        out = self.last_image  # .transpose(Image.ROTATE_180)
+        # Save output on disk
         out.save(os.path.join(self.output_dir, "frame.bmp"))
-        logging.info(f"Frame saved at: {self.output_dir} !")
+        logging.info(f"Dashboard image saved at: {self.output_dir}/frame.bmp")
 
     def render_loop(self):
-
+        """
+        Main loop to periodically update the dashboard image.
+        """
         dashboard_file = self.__get_dashboard_file_from_config()
 
-        self.mutex.acquire()
-        try:
+        with self.mutex:
             self.current_dashboard = self.create_dashboard(dashboard_file)
-        finally:
-            self.mutex.release()
+
         if self.current_dashboard is None:
-            raise ValueError("Dashboard could not be created")
+            raise ValueError("Dashboard could not be created.")
 
         self.update_frame()
 
         while True:
             now = time.time()
             if now > self.last_update_time + self.refresh_interval_s:
-                logging.info("Updating frame")
+                logging.info("Updating dashboard frame...")
                 self.update_frame()
+            time.sleep(1)  # Avoid CPU overuse
 
-            # wait for the next refresh
-            time.sleep(1)
+    def start_http_server(self, port=5000):
+        """
+        Start Flask HTTP server for serving the latest image.
+        """
+        logging.info(f"Starting HTTP server on port {port}")
+        self.app.run(host="0.0.0.0", port=port, threaded=True)
 
-    def start_socket_server(self, port):
+    def start_socket_server(self, port=9999):
+        """
+        Start socket server for handling client commands.
+        """
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(("0.0.0.0", port))
         self.server.listen(5)
@@ -152,23 +155,19 @@ class DashboardManager:
         while True:
             client_socket, addr = self.server.accept()
             logging.info(f"Accepted connection from {addr}")
-            client_handler = threading.Thread(
-                target=DashboardManager.handle_client_connection, args=(self, client_socket)
-            )
+            client_handler = threading.Thread(target=self.handle_client_connection, args=(client_socket,))
             client_handler.start()
 
-    def stop_socket_server(self):
-        self.server.close()
-
     def handle_client_connection(self, client_socket):
+        """
+        Handle incoming socket client commands.
+        """
         while True:
-            # read the request
             request = client_socket.recv(1024).decode()
             if not request:
                 break
 
             command, *args = request.split()
-            logging.info(type(command))
             logging.info(f"Received command: {command}")
             if command == DashboardCommand.LOAD_DASHBOARD.value:
                 if len(args) != 1:
@@ -205,19 +204,29 @@ class DashboardManager:
 
         client_socket.close()
 
+    def start_servers(self):
+        """
+        Start both Flask HTTP and socket servers in separate threads.
+        """
+        socket_port = self.config.get("socket_port", 9999)
+        flask_port = self.config.get("flask_port", 5000)
+
+        flask_thread = threading.Thread(target=self.start_http_server, args=(flask_port,), daemon=True)
+        flask_thread.start()
+
+        socket_thread = threading.Thread(target=self.start_socket_server, args=(socket_port,))
+        socket_thread.start()
+
+        # Run rendering loop in the main thread
+        self.render_loop()
+
 
 def main():
     """
-    Main function, to start the rendering loop and the socket server
+    Main function to start the dashboard manager.
     """
-
     dashboard_manager = DashboardManager()
-
-    # start the socket server
-    port = dashboard_manager.config.get("socket_port", 9999)
-    socket_thread = threading.Thread(target=dashboard_manager.start_socket_server, args=(port,))
-    socket_thread.start()
-
+    dashboard_manager.start_servers()
     # start the rendering loop, matplotlib outside of the main thread will cause issues
     # so render loop is started on main thread
     try:
