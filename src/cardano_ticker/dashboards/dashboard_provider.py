@@ -59,12 +59,22 @@ class DashboardManager:
         @self.app.route('/latest-image')
         def get_latest_image():
             """
-            HTTP Endpoint to serve the latest dashboard image.
+            HTTP Endpoint to serve the latest color dashboard image.
             """
             image_path = os.path.join(self.output_dir, "frame.bmp")
             if not os.path.exists(image_path):
                 return "No image available", 404
             return send_file(image_path, mimetype='image/bmp')
+
+        @self.app.route('/latest-image-bw')
+        def get_latest_image_bw():
+            """
+            HTTP Endpoint to serve the black-and-white dashboard image.
+            """
+            bw_image_path = os.path.join(self.output_dir, "frame_bw.bmp")
+            if not os.path.exists(bw_image_path):
+                return "No black-and-white image available", 404
+            return send_file(bw_image_path, mimetype='image/bmp')
 
     def __get_dashboard_file_from_config(self):
         """
@@ -84,7 +94,8 @@ class DashboardManager:
         value_dict = {"pool_name": f" [{ticker}] {name} ", "pool_id": self.config["pool_id"]}
 
         try:
-            dashboard_description = json.load(open(dashboard_description_file, "r"))
+            with open(dashboard_description_file, "r") as file:
+                dashboard_description = json.load(file)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             logging.error(f"Error reading dashboard file {dashboard_description_file}: {e}")
             return None
@@ -103,7 +114,7 @@ class DashboardManager:
 
     def update_frame(self):
         """
-        Render the dashboard and save it as an image.
+        Render the dashboard and save it as an image (both color and black-and-white).
         """
         with self.mutex:
             out = self.current_dashboard.render()
@@ -111,9 +122,18 @@ class DashboardManager:
             self.last_image_hash = hashlib.md5(out.tobytes()).hexdigest()
             self.last_update_time = time.time()
 
-        # Save output on disk
-        out.save(os.path.join(self.output_dir, "frame.bmp"))
-        logging.info(f"Dashboard image saved at: {self.output_dir}/frame.bmp")
+        # Save full-color image
+        color_image_path = os.path.join(self.output_dir, "frame.bmp")
+        out.save(color_image_path)
+        logging.info(f"Dashboard image saved at: {color_image_path}")
+
+        # Convert to black-and-white (1-bit) and save it
+        bw_image_path = os.path.join(self.output_dir, "frame_bw.bmp")
+        bw_image = out.convert("1")  # Convert to 1-bit black & white
+        # save the image as 1-bit bitmap
+        bw_image.save(bw_image_path)
+
+        logging.info(f"Black & white dashboard image saved at: {bw_image_path}")
 
     def render_loop(self):
         """
@@ -227,15 +247,6 @@ def main():
     """
     dashboard_manager = DashboardManager()
     dashboard_manager.start_servers()
-    # start the rendering loop, matplotlib outside of the main thread will cause issues
-    # so render loop is started on main thread
-    try:
-        dashboard_manager.render_loop()
-    except KeyboardInterrupt:
-        logging.info("Keyboard interrupt received, stopping server")
-        dashboard_manager.stop_socket_server()
-
-    dashboard_manager.stop_socket_server()
 
 
 if __name__ == "__main__":

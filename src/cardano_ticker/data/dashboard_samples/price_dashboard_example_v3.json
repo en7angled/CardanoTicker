@@ -1,0 +1,57 @@
+{
+    "canvas_size": [240, 360],
+    "background_color": "white",
+    "dashboard": [
+        {
+            "type": "ada_price",
+            "data": {
+                "currency": ["usd", "btc", "eth"]
+            },
+            "position": [0, 0.05],
+            "size": [1, 0.15],
+            "text_color": "black",
+            "background_color": "white"
+        },
+        {
+            "type": "btc_price",
+            "data": {
+                "currency": ["usd", "eur", "ada"]
+            },
+            "text_color": "black",
+            "background_color": "white",
+            "position": [0, 0.205],
+            "size": [1, 0.15]
+        },
+        {
+            "type": "eth_price",
+            "data": {
+                "currency": ["usd", "btc", "ada"]
+            },
+            "text_color": "black",
+            "background_color": "white",
+            "position": [0, 0.355],
+            "size": [1, 0.15]
+        },
+        {
+            "type": "plot_chart",
+            "data": {
+                "symbol": "ada",
+                "currency": "btc"
+            },
+            "title": "BTC/USD",
+            "increasing_line_color": "green",
+            "decreasing_line_color": "red",
+            "text_color": "black",
+            "background_color": "white",
+            "position": [0.1, 0.51],
+            "size": [0.8, 0.49]
+        },
+        {
+            "type": "date_text",
+            "position": [0, 0],
+            "size": [1, 0.05],
+            "background_color": "darkblue",
+            "text_color": "white"
+        }
+    ]
+}
