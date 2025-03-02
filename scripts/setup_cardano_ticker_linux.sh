@@ -22,10 +22,21 @@ read -r USE_VENV
 VENV_DIR="$REPO_DIR/venv"
 
 if [[ "$USE_VENV" == "yes" ]]; then
-  # Using virtual environment
+  # Ensure the python3-venv package is installed
+  if ! python3 -m venv --help &> /dev/null; then
+    echo "Error: python3-venv is not installed. Install it with:"
+    echo "  sudo apt-get install python3-venv -y"
+    exit 1
+  fi
+
+  # Create virtual environment if it doesn't exist
   if [ ! -d "$VENV_DIR" ]; then
     echo "Creating virtual environment..."
     python3 -m venv "$VENV_DIR"
+    if [ ! -f "$VENV_DIR/bin/activate" ]; then
+      echo "Error: Virtual environment creation failed!"
+      exit 1
+    fi
     echo "Virtual environment created successfully."
   fi
 
@@ -35,7 +46,7 @@ if [[ "$USE_VENV" == "yes" ]]; then
     echo "Activating virtual environment..."
     source "$ACTIVATE_SCRIPT"
   else
-    echo "Error: Activate script not found in $VENV_DIR/bin/activate" >&2
+    echo "Error: Activate script not found in $VENV_DIR/bin/activate"
     exit 1
   fi
 
@@ -51,6 +62,7 @@ if [[ "$USE_VENV" == "yes" ]]; then
     echo "Error: Failed to install provider dependencies." >&2
     exit 1
   fi
+
 else
   # System-wide installation using sudo
   echo "Installing system-wide using sudo..."
