@@ -109,7 +109,7 @@ Description=Cardano Ticker Provider
 After=network.target
 
 [Service]
-ExecStart=$([[ "$USE_VENV" == "yes" ]] && echo "$VENV_DIR/bin/python" || echo "/usr/bin/python3") -m cardano_ticker.provider
+ExecStart=$([[ "$USE_VENV" == "yes" ]] && echo "$VENV_DIR/bin/python" || echo "/usr/bin/python3") "$REPO_DIR/src/cardano_ticker/dashboards/dashboard_provider.py"
 WorkingDirectory=$REPO_DIR
 Environment=\"TICKER_CONFIG_PATH=$CONFIG_PATH\"
 Restart=always
