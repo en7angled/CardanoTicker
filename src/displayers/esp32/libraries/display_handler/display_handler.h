@@ -9,9 +9,11 @@ public:
     virtual void update() = 0;
     virtual int getWidth() = 0;
     virtual int getHeight() = 0;
+    virtual void clear() = 0;
     virtual uint8_t* getBuffer() = 0;
-    virtual void setPixel(uint8_t* buffer, int x, int y, uint8_t color) = 0;
-    virtual int getColorDepth() = 0;
+    virtual void setPixel(int x, int y, uint8_t* p_color) = 0;
+    virtual int getSupportedBitDepth() = 0;
+    virtual bool supportsRotation() { return true; }
     virtual ~DisplayHandler() {}
 };
 

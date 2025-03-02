@@ -12,8 +12,11 @@ public:
         DEV_Module_Init();
         EPD_3IN52_Init();
     }
-    void update() override {
+    void clear() override {
+        memset(imageBuffer, 0xFF, sizeof(imageBuffer));
         EPD_3IN52_Clear();
+    }
+    void update() override {
         EPD_3IN52_display(getBuffer());
         EPD_3IN52_refresh();
         Serial.println("Display updated!");
@@ -21,14 +24,15 @@ public:
     int getWidth() override { return 240; }
     int getHeight() override { return 360; }
     uint8_t* getBuffer() override { return imageBuffer; }
-    int getColorDepth() override { return 1; }
-    void setPixel(uint8_t* buffer, int x, int y, uint8_t color) override {
+    int getSupportedBitDepth() override { return 1; }
+    void setPixel(int x, int y, uint8_t* p_color) override {
+        uint8_t color = *p_color;
         int byteIndex = (y * (getWidth() / 8)) + (x / 8);
         int bitIndex = 7 - (x % 8);
         if (color == 0) { // Black
-            buffer[byteIndex] &= ~(1 << bitIndex);
+            imageBuffer[byteIndex] &= ~(1 << bitIndex);
         } else { // White
-            buffer[byteIndex] |= (1 << bitIndex);
+            imageBuffer[byteIndex] |= (1 << bitIndex);
         }
     }
 
