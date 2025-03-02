@@ -22,6 +22,8 @@ setup(
         "pandas<=2.2.0",
         "Pillow>=9.5.0,<=11.1.0",
         "blockfrost-python>=0.6.0",
+        "flask>=2.1.0",
+        "werkzeug>=2.2.3",
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
