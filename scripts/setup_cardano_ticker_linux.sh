@@ -13,6 +13,13 @@ REPO_DIR=$(realpath "$SCRIPT_DIR/..")
 # Get the current username
 CURRENT_USER=$(whoami)
 
+# Check if setup.py or pyproject.toml exists
+if [ ! -f "$REPO_DIR/setup.py" ] && [ ! -f "$REPO_DIR/pyproject.toml" ]; then
+  echo "Error: Could not find setup.py or pyproject.toml in $REPO_DIR"
+  echo "Make sure you are running this script inside the cloned Cardano Ticker repository."
+  exit 1
+fi
+
 # Prompt the user to choose virtual environment setup
 echo "Do you want to use a virtual environment for installation? (recommended)"
 echo "Type 'yes' to use venv or 'no' to install system-wide with sudo:"
@@ -22,33 +29,33 @@ read -r USE_VENV
 VENV_DIR="$REPO_DIR/venv"
 
 if [[ "$USE_VENV" == "yes" ]]; then
-  # Ensure the python3-venv package is installed
+  # Ensure python3-venv is installed
   if ! python3 -m venv --help &> /dev/null; then
     echo "Error: python3-venv is not installed. Install it with:"
     echo "  sudo apt-get install python3-venv -y"
     exit 1
   fi
 
-  # Create virtual environment if it doesn't exist
-  if [ ! -d "$VENV_DIR" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv "$VENV_DIR"
-    if [ ! -f "$VENV_DIR/bin/activate" ]; then
-      echo "Error: Virtual environment creation failed!"
-      exit 1
-    fi
-    echo "Virtual environment created successfully."
+  # Remove existing venv if it's corrupted
+  if [ -d "$VENV_DIR" ]; then
+    echo "Removing existing virtual environment..."
+    rm -rf "$VENV_DIR"
   fi
 
-  # Check if the activate script exists and source it
-  ACTIVATE_SCRIPT="$VENV_DIR/bin/activate"
-  if [ -f "$ACTIVATE_SCRIPT" ]; then
-    echo "Activating virtual environment..."
-    source "$ACTIVATE_SCRIPT"
-  else
-    echo "Error: Activate script not found in $VENV_DIR/bin/activate"
+  # Create virtual environment
+  echo "Creating virtual environment..."
+  python3 -m venv "$VENV_DIR"
+
+  # Verify venv was created successfully
+  if [ ! -f "$VENV_DIR/bin/activate" ]; then
+    echo "Error: Virtual environment creation failed!"
     exit 1
   fi
+  echo "Virtual environment created successfully."
+
+  # Activate the virtual environment
+  echo "Activating virtual environment..."
+  source "$VENV_DIR/bin/activate"
 
   # Upgrade pip inside the virtual environment
   echo "Upgrading pip..."
@@ -56,6 +63,7 @@ if [[ "$USE_VENV" == "yes" ]]; then
 
   # Install provider dependencies
   echo "Installing provider dependencies..."
+  cd "$REPO_DIR"
   if pip install .; then
     echo "Provider dependencies installed successfully."
   else
@@ -66,6 +74,7 @@ if [[ "$USE_VENV" == "yes" ]]; then
 else
   # System-wide installation using sudo
   echo "Installing system-wide using sudo..."
+  cd "$REPO_DIR"
   if sudo pip install .; then
     echo "Provider dependencies installed successfully."
   else
