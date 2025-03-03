@@ -25,7 +25,9 @@ Refer to the [Hardware Components List](https://github.com/en7angled/CardanoTick
 
 ### 2. Software Setup
 
-Clone the repository and follow the [Setup Guide](https://github.com/en7angled/CardanoTicker/blob/main/docs/Cardano_Ticker_Installation_Guide.md) to configure the software.
+Clone the repository and follow the Setup Guide to configure the software:
+- [Connected Version (raspberry pi)](https://github.com/en7angled/CardanoTicker/blob/main/docs/installation_guide_raspberry_pi.md) 
+- [Wireless Version (esp32)](https://github.com/en7angled/CardanoTicker/blob/main/docs/installation_guide_esp32.md) 
 
 ### 3. System Components Overview
 
