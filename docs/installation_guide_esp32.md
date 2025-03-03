@@ -45,8 +45,7 @@ The server is responsible for fetching blockchain data and generating dashboard 
   ```
   Ensure that the server is running and accessible over the network. 
   The server exposes two different types of the dashboard (color and bw):
-  http://127.0.0.1:5335/latest-image
-  http://127.0.0.1:5335/latest-image-bw
+  http://127.0.0.1:5335/latest-image and http://127.0.0.1:5335/latest-image-bw
 
 ## 2. Setting Up the Displayer (ESP32)
 ### Steps:
