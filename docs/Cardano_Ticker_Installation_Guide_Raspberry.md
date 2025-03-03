@@ -8,11 +8,11 @@ This guide walks you through setting up the Cardano Ticker for the connected ver
 ## **1. Prerequisites**
 
 Before starting, ensure you have the following items:
-- Raspberry Pi Zero 2W
+- Raspberry Pi (3 / 4/ 5 / Zero 2W)
 - MicroSD card (16GB or larger, Class 10 or better)
 - Power adapter
 - Internet connection (Wi-Fi or Ethernet via an adapter)
-- Cardano Ticker hardware components (e-paper display, buttons, etc.)
+- Cardano Ticker hardware components (e-paper/lcd display, buttons, etc.)
 
 ---
 
@@ -51,11 +51,11 @@ Before starting, ensure you have the following items:
 
 ## **3. Cardano Ticker Installation**
 
-1. **Run the `setup_cardano_ticker.sh` Script:**
-   - From the `scripts` directory, execute the `setup_cardano_ticker.sh` script:
+1. **Run the `setup_cardano_ticker_pi.sh` Script:**
+   - From the `scripts` directory, execute the `setup_cardano_ticker_pi.sh` script:
      ```bash
-     chmod +x setup_cardano_ticker.sh
-     ./setup_cardano_ticker.sh
+     chmod +x setup_cardano_ticker_pi.sh
+     ./setup_cardano_ticker_pi.sh
      ```
 
    **Script Features:**
