@@ -42,6 +42,7 @@ The server is responsible for fetching blockchain data and generating dashboard 
 - Restart Services After Configuration:**
   ```bash
   sudo systemctl restart cardano-ticker-provider
+  ```
   Ensure that the server is running and accessible over the network. 
   The server exposes two different types of the dashboard (color and bw):
   http://127.0.0.1:5335/latest-image
