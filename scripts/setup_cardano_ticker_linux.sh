@@ -93,6 +93,17 @@ else
   echo "Configuration file already exists at $CONFIG_PATH."
 fi
 
+# modify config file output_dir field !
+FRAME_OUTPUTDIR=$REPO_DIR/src/cardano_ticker/data/
+if [ -f "$CONFIG_PATH" ]; then
+  echo "Modifying configuration file..."
+  sed -i "s|\"output_dir\":.*|\"output_dir\": \"$FRAME_OUTPUTDIR\",|" "$CONFIG_PATH"
+  echo "Configuration file modified successfully."
+else
+  echo "Error: Configuration file not found at $CONFIG_PATH." >&2
+  exit 1
+fi
+
 # Set environment variable in .bashrc
 if ! grep -q "TICKER_CONFIG_PATH" ~/.bashrc; then
   echo "Setting TICKER_CONFIG_PATH environment variable..."
