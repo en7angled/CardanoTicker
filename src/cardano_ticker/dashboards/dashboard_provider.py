@@ -90,8 +90,12 @@ class DashboardManager:
         logging.info("Creating dashboard")
 
         # Get pool name and ticker
-        name, ticker = self.fetcher.pool_name_and_ticker(self.config["pool_id"])
-        value_dict = {"pool_name": f" [{ticker}] {name} ", "pool_id": self.config["pool_id"]}
+        try:
+            name, ticker = self.fetcher.pool_name_and_ticker(self.config["pool_id"])
+            value_dict = {"pool_name": f" [{ticker}] {name} ", "pool_id": self.config["pool_id"]}
+        except:
+            logging.info("Failed to fetch pool info")
+            value_dict={}
 
         try:
             with open(dashboard_description_file, "r") as file:
