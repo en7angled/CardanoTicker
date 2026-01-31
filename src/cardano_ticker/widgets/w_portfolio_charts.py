@@ -217,7 +217,7 @@ class AllocationDonutChart(AbstractWidget):
             self.data = [(name, value, get_asset_color(name)) for name, value, _ in raw_data]
 
     def render(self):
-        """Render the donut chart - following PieChartWidget pattern"""
+        """Render the donut chart with improved label positioning to avoid overlaps"""
         if not self.data:
             self._render_empty()
             return
@@ -229,6 +229,7 @@ class AllocationDonutChart(AbstractWidget):
             return
 
         labels, values, colors = zip(*filtered_data)
+        total_value = sum(values)
 
         # Normalize colors for matplotlib
         norm_colors = [self._normalize_color(self._convert_color(c)) for c in colors]
@@ -242,34 +243,58 @@ class AllocationDonutChart(AbstractWidget):
         # Set background
         bk_color = self._normalize_color(self.background_color)
         fig.set_facecolor(bk_color)
+        ax.set_facecolor(bk_color)
 
-        # Draw pie chart with labels directly on it (like PieChartWidget)
+        # Calculate percentages to determine which labels to show
+        percentages = [(v / total_value * 100) if total_value > 0 else 0 for v in values]
+        
+        # Create labels list - show label+percentage for segments >= 10%, empty string for smaller ones
+        # This prevents overlapping text by only showing labels on larger segments
+        chart_labels = []
+        
+        for label, pct in zip(labels, percentages):
+            if pct >= 10.0:  # Show label on chart if >= 10%
+                chart_labels.append(f"{label}\n{pct:.0f}%")
+            else:  # Hide label for segments < 10%
+                chart_labels.append('')  # Empty label to maintain list length
+
+        # Draw pie chart - labels list matches values length
         wedges, texts, autotexts = ax.pie(
             values,
-            labels=labels,
+            labels=chart_labels,
             colors=norm_colors,
-            autopct='%1.0f%%',
+            autopct='',  # Don't show percentage in autopct, we handle it in labels
             startangle=90,
             wedgeprops={'width': 1 - self.hole_ratio, 'edgecolor': 'white', 'linewidth': 1},
+            labeldistance=1.15,  # Move labels further out
+            pctdistance=0.85,  # Position percentages closer to center
+            textprops={'fontsize': self.font_size, 'ha': 'center', 'va': 'center'},
         )
 
-        # Set text colors
+        # Set text colors for labels on chart (only non-empty labels)
         for text in texts:
-            text.set_color(self.text_color_normalized)
+            if text.get_text():  # Only style non-empty labels
+                text.set_color(self.text_color_normalized)
+                text.set_fontweight('bold')
+                # Adjust text position to avoid overlaps with background
+                text.set_bbox(dict(boxstyle='round,pad=0.3', facecolor=bk_color, edgecolor='none', alpha=0.8))
+            else:
+                text.set_visible(False)  # Hide empty labels
+
+        # Remove autotexts since we're handling percentages in labels
         for autotext in autotexts:
-            autotext.set_color('white')
-            autotext.set_fontsize(self.font_size - 2)
+            autotext.set_visible(False)
 
         ax.axis('equal')
 
         # Add title if specified
         if self.title:
             ax.set_title(self.title, fontsize=self.font_size + 2, fontweight='bold',
-                         color=self.text_color_normalized)
+                         color=self.text_color_normalized, pad=5)
 
-        # Save figure (like PieChartWidget - no bbox_inches='tight')
+        # Save figure (maintain exact widget size like PieChartWidget)
         buf = io.BytesIO()
-        plt.savefig(buf, format='png', facecolor=bk_color)
+        plt.savefig(buf, format='png', facecolor=bk_color, dpi=100)
         buf.seek(0)
         self._canvas = Image.open(buf).convert('RGBA')
 
