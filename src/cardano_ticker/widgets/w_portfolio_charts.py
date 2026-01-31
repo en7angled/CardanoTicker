@@ -52,6 +52,7 @@ class PortfolioSummaryWidget(AbstractWidget):
         self.total_pnl = 0
         self.total_pnl_percent = 0
         self.perf_7d = None  # 7-day performance (if available)
+        self.eur_value = None  # None if rate cannot be fetched
 
     def update(self):
         """Fetch latest portfolio data"""
@@ -64,6 +65,12 @@ class PortfolioSummaryWidget(AbstractWidget):
                 self.total_pnl = summary.get('totalPnl', 0)
                 self.total_pnl_percent = summary.get('totalPnlPercent', 0)
                 self.perf_7d = summary.get('performance7d', None)
+                # Fetch EUR rate and calculate EUR value (only if rate is available)
+                eur_rate = self.portfolio_fetcher.get_eur_rate(refresh=True)
+                if eur_rate is not None:
+                    self.eur_value = self.total_value * eur_rate
+                else:
+                    self.eur_value = None
 
     def _auto_adjust_font(self, text, font_path, start_size, max_width):
         """Shrink font until text fits within max_width"""
@@ -110,30 +117,25 @@ class PortfolioSummaryWidget(AbstractWidget):
         usd_value = f"${self.total_value:,.0f}"
         btc_value_str = f"{btc_value:.3f} BTC"
         btc_price_str = f"${self.btc_price:,.0f}"
-
-        if self.perf_7d is not None:
-            perf_value = f"{'+' if self.perf_7d >= 0 else ''}{self.perf_7d:.1f}%"
-            perf_color = COLOR_GREEN if self.perf_7d >= 0 else COLOR_RED
-            perf_label = "7d Change"
-        else:
-            perf_value = f"{'+' if self.total_pnl >= 0 else ''}${self.total_pnl:,.0f}"
-            perf_color = COLOR_GREEN if self.total_pnl >= 0 else COLOR_RED
-            perf_label = "Total P&L"
+        
+        # Prepare EUR value only if available
+        if self.eur_value is not None:
+            eur_value_str = f"€{self.eur_value:,.0f}"
+            font_eur = self._auto_adjust_font(eur_value_str, self.font_path, value_font_size, cell_width)
 
         # Auto-adjust fonts for each value
         font_usd = self._auto_adjust_font(usd_value, self.font_path, value_font_size, cell_width)
         font_btc = self._auto_adjust_font(btc_value_str, self.font_path, value_font_size, cell_width)
         font_price = self._auto_adjust_font(btc_price_str, self.font_path, value_font_size, cell_width)
-        font_pnl = self._auto_adjust_font(perf_value, self.font_path, value_font_size, cell_width)
 
         # Row positions
         label_y_offset = 2
         value_y_offset = label_font_size + 4
         col2_x = section_width
 
-        # Row 1, Column 1: Portfolio Value (USD)
-        draw.text((padding_x, label_y_offset), "Portfolio", fill=COLOR_BLACK, font=font_label)
-        draw.text((padding_x, value_y_offset), usd_value, fill=COLOR_BLACK, font=font_usd)
+        # Row 1, Column 1: BTC Price
+        draw.text((padding_x, label_y_offset), "BTC Price", fill=COLOR_BLACK, font=font_label)
+        draw.text((padding_x, value_y_offset), btc_price_str, fill=COLOR_BLUE, font=font_price)
 
         # Row 1, Column 2: Portfolio Value (BTC)
         draw.text((col2_x + padding_x, label_y_offset), "In BTC", fill=COLOR_BLACK, font=font_label)
@@ -142,13 +144,14 @@ class PortfolioSummaryWidget(AbstractWidget):
         # Row 2
         row2_y = row_height
 
-        # Row 2, Column 1: BTC Price
-        draw.text((padding_x, row2_y + label_y_offset), "BTC Price", fill=COLOR_BLACK, font=font_label)
-        draw.text((padding_x, row2_y + value_y_offset), btc_price_str, fill=COLOR_BLUE, font=font_price)
+        # Row 2, Column 1: Portfolio Value (USD) - in green
+        draw.text((padding_x, row2_y + label_y_offset), "Portfolio", fill=COLOR_BLACK, font=font_label)
+        draw.text((padding_x, row2_y + value_y_offset), usd_value, fill=COLOR_GREEN, font=font_usd)
 
-        # Row 2, Column 2: Total P&L
-        draw.text((col2_x + padding_x, row2_y + label_y_offset), perf_label, fill=COLOR_BLACK, font=font_label)
-        draw.text((col2_x + padding_x, row2_y + value_y_offset), perf_value, fill=perf_color, font=font_pnl)
+        # Row 2, Column 2: Portfolio Value in EUR (only if available)
+        if self.eur_value is not None:
+            draw.text((col2_x + padding_x, row2_y + label_y_offset), "In EUR", fill=COLOR_BLACK, font=font_label)
+            draw.text((col2_x + padding_x, row2_y + value_y_offset), eur_value_str, fill=COLOR_BLUE, font=font_eur)
 
         # Draw separating lines
         draw.line([(0, row_height), (self.width, row_height)], fill=COLOR_BLACK, width=1)

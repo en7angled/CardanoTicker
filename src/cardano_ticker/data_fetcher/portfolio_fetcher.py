@@ -108,6 +108,7 @@ class PortfolioDataFetcher:
         self._cached_holdings: Optional[List[PortfolioHolding]] = None
         self._cached_prices: Dict[str, float] = {}
         self._cached_btc_price: float = 0
+        self._cached_eur_rate: Optional[float] = None
 
     def set_manual_holdings(self, holdings: List[Dict]) -> None:
         """
@@ -323,6 +324,34 @@ class PortfolioDataFetcher:
     def get_btc_price(self) -> float:
         """Get the cached BTC price from the last API call"""
         return self._cached_btc_price
+
+    def get_eur_rate(self, refresh: bool = False) -> Optional[float]:
+        """
+        Get EUR/USD exchange rate.
+        
+        Args:
+            refresh: If True, fetch fresh rate. If False, use cached rate.
+            
+        Returns:
+            EUR/USD exchange rate (e.g., 0.92 means 1 USD = 0.92 EUR), or None if fetch fails.
+        """
+        if not refresh and self._cached_eur_rate is not None:
+            return self._cached_eur_rate
+        
+        try:
+            # Try to get EUR/USD rate from a free API
+            response = requests.get('https://api.exchangerate-api.com/v4/latest/USD', timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                rate = data.get('rates', {}).get('EUR')
+                if rate and rate > 0:
+                    self._cached_eur_rate = rate
+                    return rate
+        except Exception as e:
+            logging.warning(f"Failed to fetch EUR rate: {e}")
+        
+        self._cached_eur_rate = None
+        return None
 
     def get_allocation_data(self, refresh: bool = False) -> List[Tuple[str, float, str]]:
         """
