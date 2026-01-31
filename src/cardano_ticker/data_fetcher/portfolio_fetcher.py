@@ -72,7 +72,13 @@ class PortfolioDataFetcher:
     Can also work with manually provided data.
     """
 
-    def __init__(self, api_base_url: Optional[str] = None, portfolio_id: int = 1):
+    def __init__(
+        self,
+        api_base_url: Optional[str] = None,
+        portfolio_id: int = 1,
+        api_key: Optional[str] = None,
+        user_id: Optional[str] = None
+    ):
         """
         Initialize the portfolio data fetcher.
 
@@ -80,11 +86,16 @@ class PortfolioDataFetcher:
             api_base_url: Base URL for the portfolio-tracker API (e.g., "http://localhost:3000")
                          If None, only manual data can be used.
             portfolio_id: The portfolio ID to fetch data for
+            api_key: API key for authentication (required for API access)
+            user_id: User ID whose portfolio to fetch (required for API access)
         """
         self.api_base_url = api_base_url.rstrip('/') if api_base_url else None
         self.portfolio_id = portfolio_id
+        self.api_key = api_key
+        self.user_id = user_id
         self._cached_holdings: Optional[List[PortfolioHolding]] = None
         self._cached_prices: Dict[str, float] = {}
+        self._cached_btc_price: float = 0
 
     def set_manual_holdings(self, holdings: List[Dict]) -> None:
         """
@@ -114,6 +125,39 @@ class PortfolioDataFetcher:
                 pnl_percent=pnl_percent,
                 color=get_asset_color(asset)
             ))
+
+    def fetch_from_ticker_api(self) -> Optional[Dict]:
+        """
+        Fetch portfolio data from the dedicated ticker API endpoint.
+        This endpoint uses API key authentication and returns all data in one call.
+        """
+        if not self.api_base_url or not self.api_key or not self.user_id:
+            logging.warning("API URL, API key, or user ID not configured")
+            return None
+
+        try:
+            url = f"{self.api_base_url}/api/ticker/portfolio"
+            params = {
+                'portfolioId': self.portfolio_id,
+                'userId': self.user_id
+            }
+            headers = {
+                'X-API-Key': self.api_key
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=15)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 401:
+                logging.error("Ticker API authentication failed. Check your API key.")
+            elif e.response.status_code == 404:
+                logging.error("Portfolio not found. Check portfolioId and userId.")
+            else:
+                logging.error(f"Ticker API error: {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Failed to fetch from ticker API: {e}")
+            return None
 
     def fetch_current_prices(self, symbols: List[str]) -> Dict[str, float]:
         """Fetch current prices from the portfolio-tracker API"""
@@ -212,7 +256,27 @@ class PortfolioDataFetcher:
         if not self.api_base_url:
             return self._cached_holdings or []
 
-        # Fetch transactions and calculate holdings
+        # Try the dedicated ticker API first (if API key and user_id are configured)
+        if self.api_key and self.user_id:
+            data = self.fetch_from_ticker_api()
+            if data and 'holdings' in data:
+                self._cached_holdings = [
+                    PortfolioHolding(
+                        asset=h['asset'],
+                        quantity=h['quantity'],
+                        current_price=h['currentPrice'],
+                        current_value=h['currentValue'],
+                        cost_basis=h['costBasis'],
+                        pnl=h['pnl'],
+                        pnl_percent=h['pnlPercent'],
+                        color=h['color']
+                    )
+                    for h in data['holdings']
+                ]
+                self._cached_btc_price = data.get('summary', {}).get('btcPrice', 0)
+                return self._cached_holdings
+
+        # Fallback to transaction-based calculation (requires session auth - won't work externally)
         transactions = self.fetch_transactions()
         if not transactions:
             return self._cached_holdings or []
@@ -244,6 +308,10 @@ class PortfolioDataFetcher:
             holdings=holdings
         )
 
+    def get_btc_price(self) -> float:
+        """Get the cached BTC price from the last API call"""
+        return self._cached_btc_price
+
     def get_allocation_data(self, refresh: bool = False) -> List[Tuple[str, float, str]]:
         """
         Get allocation data for pie chart.
@@ -251,6 +319,17 @@ class PortfolioDataFetcher:
         Returns:
             List of tuples: (asset_name, value_usd, color)
         """
+        # Try ticker API first for fresh data
+        if refresh and self.api_key and self.user_id and self.api_base_url:
+            data = self.fetch_from_ticker_api()
+            if data and 'allocation' in data:
+                self._cached_btc_price = data.get('summary', {}).get('btcPrice', 0)
+                return [
+                    (a['asset'], a['value'], a['color'])
+                    for a in data['allocation']
+                ]
+
+        # Fallback to holdings-based calculation
         holdings = self.get_holdings(refresh)
         return [(h.asset, h.current_value, h.color) for h in holdings if h.current_value > 0]
 
@@ -262,6 +341,17 @@ class PortfolioDataFetcher:
             List of tuples: (asset_name, pnl_value, color)
             Color is green for profit, red for loss
         """
+        # Try ticker API first for fresh data
+        if refresh and self.api_key and self.user_id and self.api_base_url:
+            data = self.fetch_from_ticker_api()
+            if data and 'pnlData' in data:
+                self._cached_btc_price = data.get('summary', {}).get('btcPrice', 0)
+                return [
+                    (p['asset'], p['pnl'], p['color'])
+                    for p in data['pnlData']
+                ]
+
+        # Fallback to holdings-based calculation
         holdings = self.get_holdings(refresh)
         result = []
         for h in holdings:

@@ -187,10 +187,13 @@ class DashboardGenerator:
                 # Can use manual data or connect to portfolio-tracker API
                 api_url = widget_data["data"].get("api_url", None)
                 portfolio_id = widget_data["data"].get("portfolio_id", 1)
+                api_key = widget_data["data"].get("api_key", None)
+                user_id = widget_data["data"].get("user_id", None)
                 manual_data = widget_data["data"].get("holdings", None)
                 hole_ratio = widget_data["data"].get("hole_ratio", 0.5)
                 show_legend = widget_data["data"].get("show_legend", True)
                 title = widget_data["data"].get("title", None)
+                btc_price = widget_data["data"].get("btc_price", None)
 
                 portfolio_fetcher = None
                 data = None
@@ -201,9 +204,14 @@ class DashboardGenerator:
                         (h["asset"], h["value"], h.get("color", None) or "#6b7280")
                         for h in manual_data
                     ]
-                elif api_url:
-                    # Connect to portfolio-tracker API
-                    portfolio_fetcher = PortfolioDataFetcher(api_url, portfolio_id)
+                elif api_url and api_key and user_id:
+                    # Connect to portfolio-tracker API with authentication
+                    portfolio_fetcher = PortfolioDataFetcher(
+                        api_base_url=api_url,
+                        portfolio_id=portfolio_id,
+                        api_key=api_key,
+                        user_id=user_id
+                    )
 
                 widget = AllocationDonutChart(
                     size,
@@ -215,11 +223,14 @@ class DashboardGenerator:
                     font_size=font_size,
                     show_legend=show_legend,
                     title=title,
+                    btc_price=btc_price,
                 )
             elif widget_type == "pnl_treemap":
                 # Portfolio gains/losses treemap (heatmap)
                 api_url = widget_data["data"].get("api_url", None)
                 portfolio_id = widget_data["data"].get("portfolio_id", 1)
+                api_key = widget_data["data"].get("api_key", None)
+                user_id = widget_data["data"].get("user_id", None)
                 manual_data = widget_data["data"].get("pnl_data", None)
                 title = widget_data["data"].get("title", "Portfolio P&L")
                 padding = widget_data["data"].get("padding", 2)
@@ -237,9 +248,14 @@ class DashboardGenerator:
                         )
                         for p in manual_data
                     ]
-                elif api_url:
-                    # Connect to portfolio-tracker API
-                    portfolio_fetcher = PortfolioDataFetcher(api_url, portfolio_id)
+                elif api_url and api_key and user_id:
+                    # Connect to portfolio-tracker API with authentication
+                    portfolio_fetcher = PortfolioDataFetcher(
+                        api_base_url=api_url,
+                        portfolio_id=portfolio_id,
+                        api_key=api_key,
+                        user_id=user_id
+                    )
 
                 widget = TreemapWidget(
                     size,

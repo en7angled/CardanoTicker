@@ -39,6 +39,7 @@ class AllocationDonutChart(AbstractWidget):
         font_size: int = 10,
         show_legend: bool = True,
         title: Optional[str] = None,
+        btc_price: Optional[float] = None,
     ):
         """
         Initialize the donut chart.
@@ -53,6 +54,7 @@ class AllocationDonutChart(AbstractWidget):
             font_size: Font size for labels
             show_legend: Whether to show a legend
             title: Optional title for the chart
+            btc_price: Current BTC price in USD for displaying value in BTC
         """
         super().__init__(size, background_color=background_color)
         self.data = data or []
@@ -63,6 +65,7 @@ class AllocationDonutChart(AbstractWidget):
         self.font_size = font_size
         self.show_legend = show_legend
         self.title = title
+        self.btc_price = btc_price
 
     def update(self, data: Optional[List[Tuple[str, float, str]]] = None):
         """Update the chart data"""
@@ -92,7 +95,7 @@ class AllocationDonutChart(AbstractWidget):
         # Normalize colors for matplotlib
         norm_colors = [self._normalize_color(self._convert_color(c)) for c in colors]
 
-        # Create figure
+        # Create figure with space for title/value at top
         fig_width = self.width / 100
         fig_height = self.height / 100
         fig, ax = plt.subplots(figsize=(fig_width, fig_height))
@@ -102,36 +105,39 @@ class AllocationDonutChart(AbstractWidget):
         fig.patch.set_facecolor(bk_color)
         ax.set_facecolor(bk_color)
 
-        # Create custom labels with percentages
-        display_labels = [f'{l}\n{p:.1f}%' for l, p in zip(labels, percentages)]
-
         # Draw pie chart with hole (donut)
-        wedges, texts, autotexts = ax.pie(
+        wedges, texts = ax.pie(
             values,
             labels=None,  # We'll add legend instead
             colors=norm_colors,
-            autopct='',
             startangle=90,
             wedgeprops={'width': 1 - self.hole_ratio, 'edgecolor': 'white', 'linewidth': 1},
-            pctdistance=0.75,
         )
 
-        # Add center text showing total value
-        center_text = f'${total:,.0f}'
-        ax.text(0, 0, center_text, ha='center', va='center',
-                fontsize=self.font_size + 2, fontweight='bold',
-                color=self.text_color_normalized)
+        # Build title with value on top (USD and BTC)
+        title_parts = []
+        if self.title:
+            title_parts.append(self.title)
+
+        # Format total value
+        value_str = f'${total:,.0f}'
+        if self.btc_price and self.btc_price > 0:
+            btc_value = total / self.btc_price
+            value_str += f'  |  {btc_value:.4f} BTC'
+        title_parts.append(value_str)
+
+        full_title = '\n'.join(title_parts)
+        ax.set_title(full_title, fontsize=self.font_size, fontweight='bold',
+                     color=self.text_color_normalized, pad=10, linespacing=1.5)
 
         # Add legend if enabled
         if self.show_legend:
             legend_labels = [f'{l} ({p:.1f}%)' for l, p in zip(labels, percentages)]
             ax.legend(wedges, legend_labels, loc='center left', bbox_to_anchor=(1, 0.5),
                       fontsize=self.font_size - 2, frameon=False)
-            fig.subplots_adjust(right=0.65)
-
-        # Add title if provided
-        if self.title:
-            ax.set_title(self.title, fontsize=self.font_size, color=self.text_color_normalized, pad=10)
+            fig.subplots_adjust(right=0.65, top=0.85)
+        else:
+            fig.subplots_adjust(top=0.85)
 
         ax.axis('equal')
 
