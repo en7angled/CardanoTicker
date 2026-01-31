@@ -77,7 +77,7 @@ class PortfolioDataFetcher:
         api_base_url: Optional[str] = None,
         portfolio_id: int = 1,
         api_key: Optional[str] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None  # Deprecated: userId is now derived from API key
     ):
         """
         Initialize the portfolio data fetcher.
@@ -87,12 +87,11 @@ class PortfolioDataFetcher:
                          If None, only manual data can be used.
             portfolio_id: The portfolio ID to fetch data for
             api_key: API key for authentication (required for API access)
-            user_id: User ID whose portfolio to fetch (required for API access)
+            user_id: Deprecated - userId is now derived from the API key on the server
         """
         self.api_base_url = api_base_url.rstrip('/') if api_base_url else None
         self.portfolio_id = portfolio_id
         self.api_key = api_key
-        self.user_id = user_id
         self._cached_holdings: Optional[List[PortfolioHolding]] = None
         self._cached_prices: Dict[str, float] = {}
         self._cached_btc_price: float = 0
@@ -130,16 +129,16 @@ class PortfolioDataFetcher:
         """
         Fetch portfolio data from the dedicated ticker API endpoint.
         This endpoint uses API key authentication and returns all data in one call.
+        The user is identified from the API key on the server side.
         """
-        if not self.api_base_url or not self.api_key or not self.user_id:
-            logging.warning("API URL, API key, or user ID not configured")
+        if not self.api_base_url or not self.api_key:
+            logging.warning("API URL or API key not configured")
             return None
 
         try:
             url = f"{self.api_base_url}/api/ticker/portfolio"
             params = {
-                'portfolioId': self.portfolio_id,
-                'userId': self.user_id
+                'portfolioId': self.portfolio_id
             }
             headers = {
                 'X-API-Key': self.api_key
@@ -151,7 +150,7 @@ class PortfolioDataFetcher:
             if e.response.status_code == 401:
                 logging.error("Ticker API authentication failed. Check your API key.")
             elif e.response.status_code == 404:
-                logging.error("Portfolio not found. Check portfolioId and userId.")
+                logging.error("Portfolio not found. Check portfolioId.")
             else:
                 logging.error(f"Ticker API error: {e}")
             return None
@@ -256,8 +255,8 @@ class PortfolioDataFetcher:
         if not self.api_base_url:
             return self._cached_holdings or []
 
-        # Try the dedicated ticker API first (if API key and user_id are configured)
-        if self.api_key and self.user_id:
+        # Try the dedicated ticker API first (if API key is configured)
+        if self.api_key:
             data = self.fetch_from_ticker_api()
             if data and 'holdings' in data:
                 self._cached_holdings = [
@@ -320,7 +319,7 @@ class PortfolioDataFetcher:
             List of tuples: (asset_name, value_usd, color)
         """
         # Try ticker API first for fresh data
-        if refresh and self.api_key and self.user_id and self.api_base_url:
+        if refresh and self.api_key and self.api_base_url:
             data = self.fetch_from_ticker_api()
             if data and 'allocation' in data:
                 self._cached_btc_price = data.get('summary', {}).get('btcPrice', 0)
@@ -342,7 +341,7 @@ class PortfolioDataFetcher:
             Color is green for profit, red for loss
         """
         # Try ticker API first for fresh data
-        if refresh and self.api_key and self.user_id and self.api_base_url:
+        if refresh and self.api_key and self.api_base_url:
             data = self.fetch_from_ticker_api()
             if data and 'pnlData' in data:
                 self._cached_btc_price = data.get('summary', {}).get('btcPrice', 0)

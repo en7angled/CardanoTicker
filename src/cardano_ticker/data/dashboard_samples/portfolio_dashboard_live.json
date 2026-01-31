@@ -1,0 +1,48 @@
+{
+    "canvas_size": [640, 400],
+    "background_color": "white",
+    "dashboard": [
+        {
+            "type": "text",
+            "position": [0.02, 0.02],
+            "size": [0.96, 0.1],
+            "text_color": "black",
+            "background_color": "white",
+            "data": {
+                "text": "Portfolio Overview",
+                "font_size": 18
+            }
+        },
+        {
+            "type": "allocation_donut_chart",
+            "position": [0.02, 0.14],
+            "size": [0.46, 0.82],
+            "text_color": "black",
+            "background_color": "white",
+            "data": {
+                "font_size": 10,
+                "hole_ratio": 0.5,
+                "show_legend": true,
+                "title": "Allocation",
+                "api_url": "https://crypto-portofolio.com",
+                "portfolio_id": 1,
+                "api_key": "tk_2052ff9b7c45b2525a15bd4163a6bf5e0c7a1725ea078c9ad6fb16d9f26f0b85"
+            }
+        },
+        {
+            "type": "pnl_treemap",
+            "position": [0.50, 0.14],
+            "size": [0.48, 0.82],
+            "text_color": "white",
+            "background_color": "white",
+            "data": {
+                "font_size": 12,
+                "title": "Gains / Losses",
+                "padding": 3,
+                "api_url": "https://crypto-portofolio.com",
+                "portfolio_id": 1,
+                "api_key": "tk_2052ff9b7c45b2525a15bd4163a6bf5e0c7a1725ea078c9ad6fb16d9f26f0b85"
+            }
+        }
+    ]
+}

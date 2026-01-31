@@ -188,7 +188,6 @@ class DashboardGenerator:
                 api_url = widget_data["data"].get("api_url", None)
                 portfolio_id = widget_data["data"].get("portfolio_id", 1)
                 api_key = widget_data["data"].get("api_key", None)
-                user_id = widget_data["data"].get("user_id", None)
                 manual_data = widget_data["data"].get("holdings", None)
                 hole_ratio = widget_data["data"].get("hole_ratio", 0.5)
                 show_legend = widget_data["data"].get("show_legend", True)
@@ -204,13 +203,12 @@ class DashboardGenerator:
                         (h["asset"], h["value"], h.get("color", None) or "#6b7280")
                         for h in manual_data
                     ]
-                elif api_url and api_key and user_id:
+                elif api_url and api_key:
                     # Connect to portfolio-tracker API with authentication
                     portfolio_fetcher = PortfolioDataFetcher(
                         api_base_url=api_url,
                         portfolio_id=portfolio_id,
-                        api_key=api_key,
-                        user_id=user_id
+                        api_key=api_key
                     )
 
                 widget = AllocationDonutChart(
@@ -230,7 +228,6 @@ class DashboardGenerator:
                 api_url = widget_data["data"].get("api_url", None)
                 portfolio_id = widget_data["data"].get("portfolio_id", 1)
                 api_key = widget_data["data"].get("api_key", None)
-                user_id = widget_data["data"].get("user_id", None)
                 manual_data = widget_data["data"].get("pnl_data", None)
                 title = widget_data["data"].get("title", "Portfolio P&L")
                 padding = widget_data["data"].get("padding", 2)
@@ -248,13 +245,12 @@ class DashboardGenerator:
                         )
                         for p in manual_data
                     ]
-                elif api_url and api_key and user_id:
+                elif api_url and api_key:
                     # Connect to portfolio-tracker API with authentication
                     portfolio_fetcher = PortfolioDataFetcher(
                         api_base_url=api_url,
                         portfolio_id=portfolio_id,
-                        api_key=api_key,
-                        user_id=user_id
+                        api_key=api_key
                     )
 
                 widget = TreemapWidget(
