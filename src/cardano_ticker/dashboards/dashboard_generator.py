@@ -24,6 +24,7 @@ from cardano_ticker.widgets.w_pool import (
 from cardano_ticker.widgets.w_pool_history import AdaPoolHistWidget
 from cardano_ticker.widgets.w_portfolio_charts import (
     AllocationDonutChart,
+    PortfolioSummaryWidget,
     TreemapWidget,
 )
 from cardano_ticker.data_fetcher.portfolio_fetcher import PortfolioDataFetcher
@@ -182,6 +183,27 @@ class DashboardGenerator:
                     font_size=font_size,
                     line_color=widget_data["data"]["line_color"],
                 )
+            elif widget_type == "portfolio_summary":
+                # Portfolio summary bar with key metrics
+                api_url = widget_data["data"].get("api_url", None)
+                portfolio_id = widget_data["data"].get("portfolio_id", 1)
+                api_key = widget_data["data"].get("api_key", None)
+
+                portfolio_fetcher = None
+                if api_url and api_key:
+                    portfolio_fetcher = PortfolioDataFetcher(
+                        api_base_url=api_url,
+                        portfolio_id=portfolio_id,
+                        api_key=api_key
+                    )
+
+                widget = PortfolioSummaryWidget(
+                    size,
+                    portfolio_fetcher=portfolio_fetcher,
+                    background_color=background_color,
+                    text_color=text_color,
+                    font_size=font_size,
+                )
             elif widget_type == "allocation_donut_chart":
                 # Portfolio allocation donut chart
                 # Can use manual data or connect to portfolio-tracker API
@@ -193,6 +215,7 @@ class DashboardGenerator:
                 show_legend = widget_data["data"].get("show_legend", True)
                 title = widget_data["data"].get("title", None)
                 btc_price = widget_data["data"].get("btc_price", None)
+                hide_value = widget_data["data"].get("hide_value", False)
 
                 portfolio_fetcher = None
                 data = None
@@ -222,6 +245,7 @@ class DashboardGenerator:
                     show_legend=show_legend,
                     title=title,
                     btc_price=btc_price,
+                    hide_value=hide_value,
                 )
             elif widget_type == "pnl_treemap":
                 # Portfolio gains/losses treemap (heatmap)

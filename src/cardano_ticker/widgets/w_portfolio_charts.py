@@ -2,6 +2,7 @@
 Portfolio visualization widgets for e-ink displays.
 
 Includes:
+- PortfolioSummaryWidget: Top bar with key portfolio metrics
 - AllocationDonutChart: Donut-style pie chart for portfolio allocation
 - TreemapWidget: Treemap visualization for gains/losses heatmap
 """
@@ -22,6 +23,110 @@ from cardano_ticker.utils.constants import RESOURCES_DIR
 logging.basicConfig(level=logging.INFO)
 
 
+class PortfolioSummaryWidget(AbstractWidget):
+    """
+    Summary widget showing key portfolio metrics:
+    - Portfolio value in USD and BTC
+    - Current BTC price
+    - 7-day performance (if available)
+    """
+
+    def __init__(
+        self,
+        size: Tuple[int, int],
+        portfolio_fetcher: Optional[PortfolioDataFetcher] = None,
+        background_color: str = "#f8f9fa",
+        text_color: str = "black",
+        font_size: int = 14,
+    ):
+        super().__init__(size, background_color=background_color)
+        self.portfolio_fetcher = portfolio_fetcher
+        self.text_color = self._convert_color(text_color)
+        self.font_size = font_size
+        self.font_path = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans-Bold.ttf")
+        self.font_path_regular = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans.ttf")
+
+        # Cached data
+        self.total_value = 0
+        self.btc_price = 0
+        self.total_pnl = 0
+        self.total_pnl_percent = 0
+        self.perf_7d = None  # 7-day performance (if available)
+
+    def update(self):
+        """Fetch latest portfolio data"""
+        if self.portfolio_fetcher:
+            data = self.portfolio_fetcher.fetch_from_ticker_api()
+            if data and 'summary' in data:
+                summary = data['summary']
+                self.total_value = summary.get('totalValue', 0)
+                self.btc_price = summary.get('btcPrice', 0)
+                self.total_pnl = summary.get('totalPnl', 0)
+                self.total_pnl_percent = summary.get('totalPnlPercent', 0)
+                self.perf_7d = summary.get('performance7d', None)
+
+    def render(self):
+        """Render the summary bar"""
+        self._canvas = Image.new('RGBA', self.resolution, self.background_color)
+        draw = ImageDraw.Draw(self._canvas)
+
+        try:
+            font_bold = ImageFont.truetype(self.font_path, self.font_size)
+            font_regular = ImageFont.truetype(self.font_path_regular, self.font_size - 2)
+            font_small = ImageFont.truetype(self.font_path_regular, self.font_size - 4)
+        except:
+            font_bold = ImageFont.load_default()
+            font_regular = font_bold
+            font_small = font_bold
+
+        # Calculate BTC value
+        btc_value = self.total_value / self.btc_price if self.btc_price > 0 else 0
+
+        # Layout: divide into sections
+        padding = 15
+        section_y = self.height // 2
+
+        # Section 1: Portfolio Value (USD)
+        usd_label = "Portfolio"
+        usd_value = f"${self.total_value:,.0f}"
+
+        draw.text((padding, section_y - 20), usd_label, fill='#666666', font=font_small)
+        draw.text((padding, section_y - 5), usd_value, fill=self.text_color, font=font_bold)
+
+        # Section 2: Portfolio Value (BTC)
+        btc_label = "In BTC"
+        btc_value_str = f"{btc_value:.4f} BTC"
+
+        section2_x = self.width // 4 + 20
+        draw.text((section2_x, section_y - 20), btc_label, fill='#666666', font=font_small)
+        draw.text((section2_x, section_y - 5), btc_value_str, fill=self.text_color, font=font_bold)
+
+        # Section 3: BTC Price
+        btc_price_label = "BTC Price"
+        btc_price_str = f"${self.btc_price:,.0f}"
+
+        section3_x = self.width // 2 + 30
+        draw.text((section3_x, section_y - 20), btc_price_label, fill='#666666', font=font_small)
+        draw.text((section3_x, section_y - 5), btc_price_str, fill='#f7931a', font=font_bold)
+
+        # Section 4: Total P&L or 7d Performance
+        if self.perf_7d is not None:
+            perf_label = "7d Change"
+            perf_value = f"{'+' if self.perf_7d >= 0 else ''}{self.perf_7d:.1f}%"
+            perf_color = '#16a34a' if self.perf_7d >= 0 else '#dc2626'
+        else:
+            perf_label = "Total P&L"
+            perf_value = f"{'+' if self.total_pnl >= 0 else ''}${self.total_pnl:,.0f}"
+            perf_color = '#16a34a' if self.total_pnl >= 0 else '#dc2626'
+
+        section4_x = 3 * self.width // 4 + 10
+        draw.text((section4_x, section_y - 20), perf_label, fill='#666666', font=font_small)
+        draw.text((section4_x, section_y - 5), perf_value, fill=perf_color, font=font_bold)
+
+        # Draw bottom border
+        draw.line([(0, self.height - 1), (self.width, self.height - 1)], fill='#dee2e6', width=1)
+
+
 class AllocationDonutChart(AbstractWidget):
     """
     Donut-style pie chart showing portfolio allocation.
@@ -40,6 +145,7 @@ class AllocationDonutChart(AbstractWidget):
         show_legend: bool = True,
         title: Optional[str] = None,
         btc_price: Optional[float] = None,
+        hide_value: bool = False,
     ):
         """
         Initialize the donut chart.
@@ -55,6 +161,7 @@ class AllocationDonutChart(AbstractWidget):
             show_legend: Whether to show a legend
             title: Optional title for the chart
             btc_price: Current BTC price in USD for displaying value in BTC
+            hide_value: If True, don't show value in title (use when summary bar shows it)
         """
         super().__init__(size, background_color=background_color)
         self.data = data or []
@@ -66,6 +173,7 @@ class AllocationDonutChart(AbstractWidget):
         self.show_legend = show_legend
         self.title = title
         self.btc_price = btc_price
+        self.hide_value = hide_value
 
     def update(self, data: Optional[List[Tuple[str, float, str]]] = None):
         """Update the chart data"""
@@ -114,21 +222,23 @@ class AllocationDonutChart(AbstractWidget):
             wedgeprops={'width': 1 - self.hole_ratio, 'edgecolor': 'white', 'linewidth': 1},
         )
 
-        # Build title with value on top (USD and BTC)
+        # Build title (optionally with value)
         title_parts = []
         if self.title:
             title_parts.append(self.title)
 
-        # Format total value
-        value_str = f'${total:,.0f}'
-        if self.btc_price and self.btc_price > 0:
-            btc_value = total / self.btc_price
-            value_str += f'  |  {btc_value:.4f} BTC'
-        title_parts.append(value_str)
+        # Format total value (unless hidden)
+        if not self.hide_value:
+            value_str = f'${total:,.0f}'
+            if self.btc_price and self.btc_price > 0:
+                btc_value = total / self.btc_price
+                value_str += f'  |  {btc_value:.4f} BTC'
+            title_parts.append(value_str)
 
-        full_title = '\n'.join(title_parts)
-        ax.set_title(full_title, fontsize=self.font_size, fontweight='bold',
-                     color=self.text_color_normalized, pad=10, linespacing=1.5)
+        if title_parts:
+            full_title = '\n'.join(title_parts)
+            ax.set_title(full_title, fontsize=self.font_size, fontweight='bold',
+                         color=self.text_color_normalized, pad=10, linespacing=1.5)
 
         # Add legend if enabled
         if self.show_legend:
