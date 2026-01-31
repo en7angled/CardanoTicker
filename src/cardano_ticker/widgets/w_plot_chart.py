@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple
 
 import matplotlib.dates as mdates
@@ -48,16 +49,19 @@ class PlotChart(AbstractWidget):
     def __validate_prices(self):
         """
         Validate the prices
+        Returns True if valid, False otherwise
         """
         if not isinstance(self._prices, pd.DataFrame):
             prices_type = type(self._prices)
-            raise TypeError(f"Prices must be a pandas DataFrame, instead got {prices_type}")
+            logging.warning(f"Prices must be a pandas DataFrame, instead got {prices_type}")
+            return False
 
         required_columns = {"open", "close", "high", "low"}
         missing_columns = required_columns - set(self._prices.columns)
 
         if missing_columns:
-            raise ValueError(f"Prices DataFrame is missing required columns: {', '.join(missing_columns)}")
+            logging.warning(f"Prices DataFrame is missing required columns: {', '.join(missing_columns)}")
+            return False
 
         return True
 
@@ -76,11 +80,12 @@ class PlotChart(AbstractWidget):
             prices: The prices to plot, a pandas dataframe with columns 'open', 'close', 'high', 'low'
         """
         self._prices = self.data_fetcher.get_chart_data(self._symbol, self._currency, 7)
-        if self.__validate_prices() is False:
-            return
-        self.render()
 
     def render(self):
+        # Skip rendering if prices data is invalid
+        if self.__validate_prices() is False:
+            return
+
         # create figure
         fig, ax = plt.subplots(figsize=(self.width / 100, self.height / 100))
 
