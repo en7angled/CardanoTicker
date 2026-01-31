@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 
+from blockfrost import ApiError
 from flask import Flask, send_file
 
 from cardano_ticker.dashboards.config import read_config
@@ -93,9 +94,9 @@ class DashboardManager:
         try:
             name, ticker = self.fetcher.pool_name_and_ticker(self.config["pool_id"])
             value_dict = {"pool_name": f" [{ticker}] {name} ", "pool_id": self.config["pool_id"]}
-        except:
-            logging.info("Failed to fetch pool info")
-            value_dict={}
+        except (ApiError, KeyError) as e:
+            logging.warning(f"Failed to fetch pool info: {e}")
+            value_dict = {}
 
         try:
             with open(dashboard_description_file, "r") as file:
@@ -206,11 +207,10 @@ class DashboardManager:
                     client_socket.send(DashboardResponses.ERROR_CREATING_DASHBOARD.value.encode())
                 else:
                     # make sure to update the current dashboard in a thread-safe manner
-                    self.mutex.acquire()
-                    self.current_dashboard = dashboard
-                    # force an update of the frame
-                    self.last_update_time = time.time() - self.refresh_interval_s
-                    self.mutex.release()
+                    with self.mutex:
+                        self.current_dashboard = dashboard
+                        # force an update of the frame
+                        self.last_update_time = time.time() - self.refresh_interval_s
                     client_socket.send(DashboardResponses.DASHBOARD_LOADED.value.encode())
             elif command == DashboardCommand.GET_LAST_IMAGE.value:
                 if self.last_image is None:

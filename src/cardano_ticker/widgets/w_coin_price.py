@@ -71,8 +71,7 @@ class PriceWidget(AbstractWidget):
         self.font_path = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans.ttf")
         self.load_font(size=self.height)
 
-    property
-
+    @property
     def currency(self):
         return self._currency
 
