@@ -43,7 +43,7 @@ class PortfolioSummaryWidget(AbstractWidget):
         self.portfolio_fetcher = portfolio_fetcher
         self.text_color = self._convert_color(text_color)
         self.font_size = font_size
-        self.font_path = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans-Bold.ttf")
+        self.font_path = os.path.join(RESOURCES_DIR, "fonts/Roboto_Condensed-Black.ttf")
         self.font_path_regular = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans.ttf")
 
         # Cached data
@@ -65,66 +65,95 @@ class PortfolioSummaryWidget(AbstractWidget):
                 self.total_pnl_percent = summary.get('totalPnlPercent', 0)
                 self.perf_7d = summary.get('performance7d', None)
 
+    def _auto_adjust_font(self, text, font_path, start_size, max_width):
+        """Shrink font until text fits within max_width"""
+        font = ImageFont.truetype(font_path, start_size)
+        while font.getbbox(text)[2] > max_width and font.size > 8:
+            font = ImageFont.truetype(font_path, font.size - 1)
+        return font
+
     def render(self):
-        """Render the summary bar"""
+        """Render the summary bar optimized for 7-color e-ink display - 2 rows layout"""
         self._canvas = Image.new('RGBA', self.resolution, self.background_color)
         draw = ImageDraw.Draw(self._canvas)
 
-        try:
-            font_bold = ImageFont.truetype(self.font_path, self.font_size)
-            font_regular = ImageFont.truetype(self.font_path_regular, self.font_size - 2)
-            font_small = ImageFont.truetype(self.font_path_regular, self.font_size - 4)
-        except:
-            font_bold = ImageFont.load_default()
-            font_regular = font_bold
-            font_small = font_bold
+        # E-ink 7-color palette - EXACT RGB values from display driver
+        COLOR_BLACK = (70, 70, 70)
+        COLOR_GREEN = (0, 255, 0)
+        COLOR_BLUE = (0, 0, 255)
+        COLOR_RED = (255, 0, 0)
+        COLOR_ORANGE = (255, 128, 0)
 
         # Calculate BTC value
         btc_value = self.total_value / self.btc_price if self.btc_price > 0 else 0
 
-        # Layout: divide into sections
-        padding = 15
-        section_y = self.height // 2
+        # Layout: 2 rows x 2 columns
+        section_width = self.width // 2
+        row_height = self.height // 2
+        padding_x = 10
 
-        # Section 1: Portfolio Value (USD)
-        usd_label = "Portfolio"
+        # Calculate font sizes based on available space
+        # Value font: fit within cell, start at row_height * 0.5
+        value_font_size = int(row_height * 0.55)
+        label_font_size = int(row_height * 0.30)
+
+        try:
+            font_bold = ImageFont.truetype(self.font_path, value_font_size)
+            font_label = ImageFont.truetype(self.font_path_regular, label_font_size)
+        except:
+            font_bold = ImageFont.load_default()
+            font_label = font_bold
+
+        cell_width = section_width - padding_x * 2
+
+        # Prepare all values
         usd_value = f"${self.total_value:,.0f}"
-
-        draw.text((padding, section_y - 20), usd_label, fill='#666666', font=font_small)
-        draw.text((padding, section_y - 5), usd_value, fill=self.text_color, font=font_bold)
-
-        # Section 2: Portfolio Value (BTC)
-        btc_label = "In BTC"
-        btc_value_str = f"{btc_value:.4f} BTC"
-
-        section2_x = self.width // 4 + 20
-        draw.text((section2_x, section_y - 20), btc_label, fill='#666666', font=font_small)
-        draw.text((section2_x, section_y - 5), btc_value_str, fill=self.text_color, font=font_bold)
-
-        # Section 3: BTC Price
-        btc_price_label = "BTC Price"
+        btc_value_str = f"{btc_value:.3f} BTC"
         btc_price_str = f"${self.btc_price:,.0f}"
 
-        section3_x = self.width // 2 + 30
-        draw.text((section3_x, section_y - 20), btc_price_label, fill='#666666', font=font_small)
-        draw.text((section3_x, section_y - 5), btc_price_str, fill='#f7931a', font=font_bold)
-
-        # Section 4: Total P&L or 7d Performance
         if self.perf_7d is not None:
-            perf_label = "7d Change"
             perf_value = f"{'+' if self.perf_7d >= 0 else ''}{self.perf_7d:.1f}%"
-            perf_color = '#16a34a' if self.perf_7d >= 0 else '#dc2626'
+            perf_color = COLOR_GREEN if self.perf_7d >= 0 else COLOR_RED
+            perf_label = "7d Change"
         else:
-            perf_label = "Total P&L"
             perf_value = f"{'+' if self.total_pnl >= 0 else ''}${self.total_pnl:,.0f}"
-            perf_color = '#16a34a' if self.total_pnl >= 0 else '#dc2626'
+            perf_color = COLOR_GREEN if self.total_pnl >= 0 else COLOR_RED
+            perf_label = "Total P&L"
 
-        section4_x = 3 * self.width // 4 + 10
-        draw.text((section4_x, section_y - 20), perf_label, fill='#666666', font=font_small)
-        draw.text((section4_x, section_y - 5), perf_value, fill=perf_color, font=font_bold)
+        # Auto-adjust fonts for each value
+        font_usd = self._auto_adjust_font(usd_value, self.font_path, value_font_size, cell_width)
+        font_btc = self._auto_adjust_font(btc_value_str, self.font_path, value_font_size, cell_width)
+        font_price = self._auto_adjust_font(btc_price_str, self.font_path, value_font_size, cell_width)
+        font_pnl = self._auto_adjust_font(perf_value, self.font_path, value_font_size, cell_width)
 
-        # Draw bottom border
-        draw.line([(0, self.height - 1), (self.width, self.height - 1)], fill='#dee2e6', width=1)
+        # Row positions
+        label_y_offset = 2
+        value_y_offset = label_font_size + 4
+        col2_x = section_width
+
+        # Row 1, Column 1: Portfolio Value (USD)
+        draw.text((padding_x, label_y_offset), "Portfolio", fill=COLOR_BLACK, font=font_label)
+        draw.text((padding_x, value_y_offset), usd_value, fill=COLOR_BLACK, font=font_usd)
+
+        # Row 1, Column 2: Portfolio Value (BTC)
+        draw.text((col2_x + padding_x, label_y_offset), "In BTC", fill=COLOR_BLACK, font=font_label)
+        draw.text((col2_x + padding_x, value_y_offset), btc_value_str, fill=COLOR_ORANGE, font=font_btc)
+
+        # Row 2
+        row2_y = row_height
+
+        # Row 2, Column 1: BTC Price
+        draw.text((padding_x, row2_y + label_y_offset), "BTC Price", fill=COLOR_BLACK, font=font_label)
+        draw.text((padding_x, row2_y + value_y_offset), btc_price_str, fill=COLOR_BLUE, font=font_price)
+
+        # Row 2, Column 2: Total P&L
+        draw.text((col2_x + padding_x, row2_y + label_y_offset), perf_label, fill=COLOR_BLACK, font=font_label)
+        draw.text((col2_x + padding_x, row2_y + value_y_offset), perf_value, fill=perf_color, font=font_pnl)
+
+        # Draw separating lines
+        draw.line([(0, row_height), (self.width, row_height)], fill=COLOR_BLACK, width=1)
+        draw.line([(section_width, 0), (section_width, self.height)], fill=COLOR_BLACK, width=1)
+        draw.line([(0, self.height - 1), (self.width, self.height - 1)], fill=COLOR_BLACK, width=2)
 
 
 class AllocationDonutChart(AbstractWidget):
@@ -180,10 +209,12 @@ class AllocationDonutChart(AbstractWidget):
         if data is not None:
             self.data = data
         elif self.portfolio_fetcher:
-            self.data = self.portfolio_fetcher.get_allocation_data(refresh=True)
+            raw_data = self.portfolio_fetcher.get_allocation_data(refresh=True)
+            # Override with e-ink compatible colors
+            self.data = [(name, value, get_asset_color(name)) for name, value, _ in raw_data]
 
     def render(self):
-        """Render the donut chart"""
+        """Render the donut chart - following PieChartWidget pattern"""
         if not self.data:
             self._render_empty()
             return
@@ -196,71 +227,48 @@ class AllocationDonutChart(AbstractWidget):
 
         labels, values, colors = zip(*filtered_data)
 
-        # Calculate percentages
-        total = sum(values)
-        percentages = [v / total * 100 for v in values]
-
         # Normalize colors for matplotlib
         norm_colors = [self._normalize_color(self._convert_color(c)) for c in colors]
 
-        # Create figure with space for title/value at top
-        fig_width = self.width / 100
-        fig_height = self.height / 100
-        fig, ax = plt.subplots(figsize=(fig_width, fig_height))
+        # Set font size in rcParams like other widgets do
+        plt.rcParams.update({"font.size": self.font_size})
+
+        # Create figure at exact widget size (like PieChartWidget)
+        fig, ax = plt.subplots(figsize=(self.width / 100, self.height / 100))
 
         # Set background
         bk_color = self._normalize_color(self.background_color)
-        fig.patch.set_facecolor(bk_color)
-        ax.set_facecolor(bk_color)
+        fig.set_facecolor(bk_color)
 
-        # Draw pie chart with hole (donut)
-        wedges, texts = ax.pie(
+        # Draw pie chart with labels directly on it (like PieChartWidget)
+        wedges, texts, autotexts = ax.pie(
             values,
-            labels=None,  # We'll add legend instead
+            labels=labels,
             colors=norm_colors,
+            autopct='%1.0f%%',
             startangle=90,
             wedgeprops={'width': 1 - self.hole_ratio, 'edgecolor': 'white', 'linewidth': 1},
         )
 
-        # Build title (optionally with value)
-        title_parts = []
-        if self.title:
-            title_parts.append(self.title)
-
-        # Format total value (unless hidden)
-        if not self.hide_value:
-            value_str = f'${total:,.0f}'
-            if self.btc_price and self.btc_price > 0:
-                btc_value = total / self.btc_price
-                value_str += f'  |  {btc_value:.4f} BTC'
-            title_parts.append(value_str)
-
-        if title_parts:
-            full_title = '\n'.join(title_parts)
-            ax.set_title(full_title, fontsize=self.font_size, fontweight='bold',
-                         color=self.text_color_normalized, pad=10, linespacing=1.5)
-
-        # Add legend if enabled
-        if self.show_legend:
-            legend_labels = [f'{l} ({p:.1f}%)' for l, p in zip(labels, percentages)]
-            ax.legend(wedges, legend_labels, loc='center left', bbox_to_anchor=(1, 0.5),
-                      fontsize=self.font_size - 2, frameon=False)
-            fig.subplots_adjust(right=0.65, top=0.85)
-        else:
-            fig.subplots_adjust(top=0.85)
+        # Set text colors
+        for text in texts:
+            text.set_color(self.text_color_normalized)
+        for autotext in autotexts:
+            autotext.set_color('white')
+            autotext.set_fontsize(self.font_size - 2)
 
         ax.axis('equal')
 
-        # Convert to image
-        buf = io.BytesIO()
-        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight',
-                    facecolor=bk_color, edgecolor='none')
-        buf.seek(0)
-        img = Image.open(buf).convert('RGBA')
+        # Add title if specified
+        if self.title:
+            ax.set_title(self.title, fontsize=self.font_size + 2, fontweight='bold',
+                         color=self.text_color_normalized)
 
-        # Resize to target size
-        img = img.resize((self.width, self.height), Image.Resampling.LANCZOS)
-        self._canvas = img
+        # Save figure (like PieChartWidget - no bbox_inches='tight')
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', facecolor=bk_color)
+        buf.seek(0)
+        self._canvas = Image.open(buf).convert('RGBA')
 
         buf.close()
         plt.close(fig)
@@ -438,6 +446,11 @@ class TreemapWidget(AbstractWidget):
             self._render_empty()
             return
 
+        # E-ink 7-color palette - EXACT RGB values from display driver
+        EINK_GREEN = (0, 255, 0)
+        EINK_RED = (255, 0, 0)
+        EINK_BLACK = (70, 70, 70)
+
         # Create canvas
         self._canvas = Image.new('RGBA', self.resolution, self.background_color)
         draw = ImageDraw.Draw(self._canvas)
@@ -455,7 +468,7 @@ class TreemapWidget(AbstractWidget):
             title_bbox = draw.textbbox((0, 0), self.title, font=font)
             title_height = title_bbox[3] - title_bbox[1] + 10
             title_x = (self.width - (title_bbox[2] - title_bbox[0])) // 2
-            draw.text((title_x, 5), self.title, fill=self._convert_color("black"), font=font)
+            draw.text((title_x, 5), self.title, fill=EINK_BLACK, font=font)
 
         # Treemap area
         treemap_y = title_height
@@ -489,9 +502,9 @@ class TreemapWidget(AbstractWidget):
             if w <= 0 or h <= 0:
                 continue
 
-            # Determine color based on P&L sign
+            # Determine color based on P&L sign (e-ink 7-color palette)
             pnl = filtered_data[idx][1]
-            fill_color = '#16a34a' if pnl >= 0 else '#dc2626'
+            fill_color = EINK_GREEN if pnl >= 0 else EINK_RED
 
             # Draw rectangle
             draw.rectangle(
@@ -552,10 +565,12 @@ class TreemapWidget(AbstractWidget):
         except:
             font = ImageFont.load_default()
 
+        # E-ink black
+        EINK_BLACK = (70, 70, 70)
         text = "No P&L data"
         bbox = draw.textbbox((0, 0), text, font=font)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         x = (self.width - text_width) // 2
         y = (self.height - text_height) // 2
-        draw.text((x, y), text, fill=self._convert_color("black"), font=font)
+        draw.text((x, y), text, fill=EINK_BLACK, font=font)

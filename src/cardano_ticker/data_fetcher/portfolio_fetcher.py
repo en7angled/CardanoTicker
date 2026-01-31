@@ -33,32 +33,45 @@ class PortfolioSummary:
     holdings: List[PortfolioHolding]
 
 
-# Default colors for common assets
+# E-ink 7-color palette - EXACT RGB values from Waveshare 4.01" display driver
+# These exact values ensure proper color mapping on the display
+EINK_BLACK = '#464646'    # RGB(70, 70, 70)
+EINK_WHITE = '#ffffff'    # RGB(255, 255, 255)
+EINK_GREEN = '#00ff00'    # RGB(0, 255, 0)
+EINK_BLUE = '#0000ff'     # RGB(0, 0, 255)
+EINK_RED = '#ff0000'      # RGB(255, 0, 0)
+EINK_ORANGE = '#ff8000'   # RGB(255, 128, 0)
+EINK_YELLOW = '#ffff00'   # RGB(255, 255, 0)
+
+# Map assets to e-ink colors for optimal display
 ASSET_COLORS = {
-    'BTC': '#f7931a',
-    'ETH': '#627eea',
-    'ADA': '#0033ad',
-    'SOL': '#00ffa3',
-    'DOT': '#e6007a',
-    'AVAX': '#e84142',
-    'MATIC': '#8247e5',
-    'LINK': '#2a5ada',
-    'UNI': '#ff007a',
-    'ATOM': '#2e3148',
-    'XRP': '#23292f',
-    'DOGE': '#c3a634',
-    'SHIB': '#ffa409',
-    'LTC': '#345d9d',
-    'BNB': '#f3ba2f',
-    'USDT': '#26a17b',
-    'USDC': '#2775ca',
-    'NIGHT': '#1a1a2e',
-    'USD': '#16a34a',
-    'EUR': '#3b82f6',
-    'CASH': '#16a34a',
+    # Major cryptos
+    'BTC': EINK_ORANGE,   # Orange
+    'ETH': EINK_BLUE,     # Blue
+    'ADA': EINK_BLUE,     # Blue
+    'SOL': EINK_GREEN,    # Green
+    'DOT': EINK_RED,      # Red
+    'AVAX': EINK_RED,     # Red
+    'MATIC': EINK_BLUE,   # Blue
+    'LINK': EINK_BLUE,    # Blue
+    'UNI': EINK_RED,      # Red
+    'ATOM': EINK_BLACK,   # Black
+    'XRP': EINK_BLACK,    # Black
+    'DOGE': EINK_YELLOW,  # Yellow
+    'SHIB': EINK_ORANGE,  # Orange
+    'LTC': EINK_BLACK,    # Black
+    'BNB': EINK_YELLOW,   # Yellow
+    # Stablecoins - Green
+    'USDT': EINK_GREEN,   # Green
+    'USDC': EINK_GREEN,   # Green
+    'USD': EINK_GREEN,    # Green
+    'EUR': EINK_GREEN,    # Green
+    'CASH': EINK_GREEN,   # Green
+    # Other
+    'NIGHT': EINK_BLACK,  # Black
 }
 
-DEFAULT_COLOR = '#6b7280'  # Gray for unknown assets
+DEFAULT_COLOR = EINK_BLACK  # Black for unknown assets
 
 
 def get_asset_color(asset: str) -> str:
@@ -355,7 +368,7 @@ class PortfolioDataFetcher:
         result = []
         for h in holdings:
             if h.current_value > 0:  # Only show assets with holdings
-                color = '#16a34a' if h.pnl >= 0 else '#dc2626'  # Green for profit, red for loss
+                color = EINK_GREEN if h.pnl >= 0 else EINK_RED  # E-ink green/red
                 result.append((h.asset, h.pnl, color))
 
         # Sort by absolute P&L descending
