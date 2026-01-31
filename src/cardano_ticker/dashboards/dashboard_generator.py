@@ -22,6 +22,11 @@ from cardano_ticker.widgets.w_pool import (
     SupplyPieChartWidget,
 )
 from cardano_ticker.widgets.w_pool_history import AdaPoolHistWidget
+from cardano_ticker.widgets.w_portfolio_charts import (
+    AllocationDonutChart,
+    TreemapWidget,
+)
+from cardano_ticker.data_fetcher.portfolio_fetcher import PortfolioDataFetcher
 
 
 class DashboardGenerator:
@@ -176,6 +181,75 @@ class DashboardGenerator:
                     background_color=background_color,
                     font_size=font_size,
                     line_color=widget_data["data"]["line_color"],
+                )
+            elif widget_type == "allocation_donut_chart":
+                # Portfolio allocation donut chart
+                # Can use manual data or connect to portfolio-tracker API
+                api_url = widget_data["data"].get("api_url", None)
+                portfolio_id = widget_data["data"].get("portfolio_id", 1)
+                manual_data = widget_data["data"].get("holdings", None)
+                hole_ratio = widget_data["data"].get("hole_ratio", 0.5)
+                show_legend = widget_data["data"].get("show_legend", True)
+                title = widget_data["data"].get("title", None)
+
+                portfolio_fetcher = None
+                data = None
+
+                if manual_data:
+                    # Use manual holdings data
+                    data = [
+                        (h["asset"], h["value"], h.get("color", None) or "#6b7280")
+                        for h in manual_data
+                    ]
+                elif api_url:
+                    # Connect to portfolio-tracker API
+                    portfolio_fetcher = PortfolioDataFetcher(api_url, portfolio_id)
+
+                widget = AllocationDonutChart(
+                    size,
+                    data=data,
+                    portfolio_fetcher=portfolio_fetcher,
+                    background_color=background_color,
+                    text_color=text_color,
+                    hole_ratio=hole_ratio,
+                    font_size=font_size,
+                    show_legend=show_legend,
+                    title=title,
+                )
+            elif widget_type == "pnl_treemap":
+                # Portfolio gains/losses treemap (heatmap)
+                api_url = widget_data["data"].get("api_url", None)
+                portfolio_id = widget_data["data"].get("portfolio_id", 1)
+                manual_data = widget_data["data"].get("pnl_data", None)
+                title = widget_data["data"].get("title", "Portfolio P&L")
+                padding = widget_data["data"].get("padding", 2)
+
+                portfolio_fetcher = None
+                data = None
+
+                if manual_data:
+                    # Use manual P&L data: [{"asset": "BTC", "pnl": 1000}, ...]
+                    data = [
+                        (
+                            p["asset"],
+                            p["pnl"],
+                            "#16a34a" if p["pnl"] >= 0 else "#dc2626"
+                        )
+                        for p in manual_data
+                    ]
+                elif api_url:
+                    # Connect to portfolio-tracker API
+                    portfolio_fetcher = PortfolioDataFetcher(api_url, portfolio_id)
+
+                widget = TreemapWidget(
+                    size,
+                    data=data,
+                    portfolio_fetcher=portfolio_fetcher,
+                    background_color=background_color,
+                    text_color=text_color,
+                    font_size=font_size,
+                    title=title,
+                    padding=padding,
                 )
             else:
                 raise ValueError(f"Widget type {widget_type} not found")
