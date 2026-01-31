@@ -40,8 +40,9 @@
             "background_color": "white",
             "data": {
                 "font_size": 16,
-                "title": "Profit / Loss",
+                "title": "7 Day Performance",
                 "padding": 4,
+                "show_7d": true,
                 "api_url": "https://crypto-portofolio.com",
                 "portfolio_id": 1,
                 "api_key": "tk_2052ff9b7c45b2525a15bd4163a6bf5e0c7a1725ea078c9ad6fb16d9f26f0b85"

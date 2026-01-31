@@ -374,3 +374,24 @@ class PortfolioDataFetcher:
         # Sort by absolute P&L descending
         result.sort(key=lambda x: abs(x[1]), reverse=True)
         return result
+
+    def get_performance_7d_data(self, refresh: bool = False) -> List[Tuple[str, float, float, str]]:
+        """
+        Get 7-day performance data for treemap/heatmap.
+
+        Returns:
+            List of tuples: (asset_name, value_change, percent_change, color)
+            Color is green for gains, red for losses
+        """
+        # Try ticker API first for fresh data
+        if refresh and self.api_key and self.api_base_url:
+            data = self.fetch_from_ticker_api()
+            if data and 'performance7d' in data:
+                self._cached_btc_price = data.get('summary', {}).get('btcPrice', 0)
+                return [
+                    (p['asset'], p['change'], p['changePercent'], p['color'])
+                    for p in data['performance7d']
+                ]
+
+        # Fallback: return empty list if no API data
+        return []

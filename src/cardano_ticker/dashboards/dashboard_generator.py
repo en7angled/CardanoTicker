@@ -255,6 +255,7 @@ class DashboardGenerator:
                 manual_data = widget_data["data"].get("pnl_data", None)
                 title = widget_data["data"].get("title", "Portfolio P&L")
                 padding = widget_data["data"].get("padding", 2)
+                show_7d = widget_data["data"].get("show_7d", False)
 
                 portfolio_fetcher = None
                 data = None
@@ -286,6 +287,7 @@ class DashboardGenerator:
                     font_size=font_size,
                     title=title,
                     padding=padding,
+                    show_7d=show_7d,
                 )
             else:
                 raise ValueError(f"Widget type {widget_type} not found")

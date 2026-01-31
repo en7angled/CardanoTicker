@@ -294,8 +294,8 @@ class AllocationDonutChart(AbstractWidget):
 
 class TreemapWidget(AbstractWidget):
     """
-    Treemap visualization for portfolio gains/losses.
-    Shows rectangles sized by absolute P&L, colored green (profit) or red (loss).
+    Treemap visualization for portfolio gains/losses or 7-day performance.
+    Shows rectangles sized by absolute value, colored green (gain) or red (loss).
     Optimized for e-ink displays.
     """
 
@@ -309,19 +309,21 @@ class TreemapWidget(AbstractWidget):
         font_size: int = 12,
         title: Optional[str] = None,
         padding: int = 2,
+        show_7d: bool = False,
     ):
         """
         Initialize the treemap widget.
 
         Args:
             size: Widget size (width, height)
-            data: List of (asset_name, pnl_value, color) tuples. If None, uses portfolio_fetcher.
+            data: List of (asset_name, value, color) tuples. If None, uses portfolio_fetcher.
             portfolio_fetcher: PortfolioDataFetcher instance to get live data
             background_color: Background color
             text_color: Text color for labels inside rectangles
             font_size: Font size for labels
             title: Optional title for the chart
             padding: Padding between rectangles in pixels
+            show_7d: If True, show 7-day performance instead of total P&L
         """
         super().__init__(size, background_color=background_color)
         self.data = data or []
@@ -330,14 +332,27 @@ class TreemapWidget(AbstractWidget):
         self.font_size = font_size
         self.title = title
         self.padding = padding
+        self.show_7d = show_7d
         self.font_path = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans.ttf")
+        # Store percent changes for display
+        self.percent_changes: dict = {}
 
     def update(self, data: Optional[List[Tuple[str, float, str]]] = None):
         """Update the treemap data"""
         if data is not None:
             self.data = data
         elif self.portfolio_fetcher:
-            self.data = self.portfolio_fetcher.get_pnl_data(refresh=True)
+            if self.show_7d:
+                # Get 7-day performance data: (asset, value_change, percent_change, color)
+                perf_data = self.portfolio_fetcher.get_performance_7d_data(refresh=True)
+                if perf_data:
+                    self.data = [(p[0], p[1], p[3]) for p in perf_data]
+                    self.percent_changes = {p[0]: p[2] for p in perf_data}
+                else:
+                    # Fallback to P&L data if no 7d data available
+                    self.data = self.portfolio_fetcher.get_pnl_data(refresh=True)
+            else:
+                self.data = self.portfolio_fetcher.get_pnl_data(refresh=True)
 
     def _squarify(self, values: List[float], x: float, y: float, width: float, height: float) -> List[dict]:
         """
@@ -516,14 +531,19 @@ class TreemapWidget(AbstractWidget):
 
             # Draw label if rectangle is big enough
             name = names[idx]
-            pnl_text = f'{"+" if pnl >= 0 else ""}${pnl:,.0f}'
+            # Show percentage for 7d mode if available, otherwise show dollar value
+            if self.show_7d and name in self.percent_changes:
+                pct = self.percent_changes[name]
+                value_text = f'{"+" if pct >= 0 else ""}{pct:.1f}%'
+            else:
+                value_text = f'{"+" if pnl >= 0 else ""}${pnl:,.0f}'
 
             # Check if text fits
             name_bbox = draw.textbbox((0, 0), name, font=font)
             name_w = name_bbox[2] - name_bbox[0]
             name_h = name_bbox[3] - name_bbox[1]
 
-            pnl_bbox = draw.textbbox((0, 0), pnl_text, font=small_font)
+            pnl_bbox = draw.textbbox((0, 0), value_text, font=small_font)
             pnl_w = pnl_bbox[2] - pnl_bbox[0]
             pnl_h = pnl_bbox[3] - pnl_bbox[1]
 
@@ -537,7 +557,7 @@ class TreemapWidget(AbstractWidget):
 
                 pnl_x = x + (w - pnl_w) / 2
                 pnl_y = text_y + name_h + 2
-                draw.text((pnl_x, pnl_y), pnl_text, fill=text_color, font=small_font)
+                draw.text((pnl_x, pnl_y), value_text, fill=text_color, font=small_font)
 
             elif w > name_w + 6 and h > name_h + 6:
                 # Only name fits
