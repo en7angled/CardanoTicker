@@ -3,9 +3,19 @@
     "background_color": "black",
     "dashboard": [
         {
+            "type": "date_text",
+            "position": [0.70, 0.05],
+            "size": [0.30, 0.10],
+            "text_color": "white",
+            "background_color": "black",
+            "data": {
+                "font_size": 24
+            }
+        },
+        {
             "type": "portfolio_summary",
-            "position": [0.0, 0.0],
-            "size": [1.0, 0.28],
+            "position": [0.0, 0.05],
+            "size": [0.70, 0.28],
             "text_color": "white",
             "background_color": "black",
             "data": {
@@ -17,8 +27,8 @@
         },
         {
             "type": "allocation_donut_chart",
-            "position": [0.0, 0.30],
-            "size": [0.48, 0.68],
+            "position": [0.0, 0.35],
+            "size": [0.48, 0.63],
             "text_color": "white",
             "background_color": "black",
             "data": {
@@ -34,8 +44,8 @@
         },
         {
             "type": "pnl_treemap",
-            "position": [0.50, 0.30],
-            "size": [0.49, 0.68],
+            "position": [0.50, 0.35],
+            "size": [0.49, 0.63],
             "text_color": "white",
             "background_color": "black",
             "data": {

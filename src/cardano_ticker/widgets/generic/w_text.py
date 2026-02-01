@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from PIL import Image, ImageColor, ImageDraw, ImageFont
 
@@ -86,8 +86,19 @@ class GenericTextWidget(AbstractWidget):
         if self._auto_adjust_font:
             self.font = self.__load_adjusted_font(self._text, self.font, self.width - self._padding)
 
-        t_offset = (self.height - self.font_size) // 2
-        draw.text((self._padding, t_offset), self._text, self._text_color, font=self.font)
+        # Get text bounding box for proper vertical centering
+        bbox = self.font.getbbox(self._text)
+        text_height = bbox[3] - bbox[1]
+        t_offset = (self.height - text_height) // 2
+        
+        # Ensure text fits horizontally
+        text_width = bbox[2] - bbox[0]
+        x = self._padding
+        if text_width + self._padding * 2 > self.width:
+            # Center if text is too wide
+            x = max(0, (self.width - text_width) // 2)
+        
+        draw.text((x, t_offset), self._text, self._text_color, font=self.font)
 
 
 class DateTimeWidget(GenericTextWidget):
@@ -96,15 +107,29 @@ class DateTimeWidget(GenericTextWidget):
         size: Tuple[int, int],
         text_color=Colors.black.value,
         background_color=Colors.white.value,
+        font_size: Optional[int] = None,
     ):
         """
         Initialize the widget
         Args:
-            price: The price of the Coin
+            size: Widget size (width, height)
+            text_color: Text color
+            background_color: Background color
+            font_size: Optional font size (if None, uses auto-adjust based on size)
         """
         time_txt = datetime.now().strftime("%b %d, %H:%M")
-
-        super().__init__(time_txt, size, text_color=text_color, background_color=background_color)
+        
+        # If font_size is specified, disable auto-adjust and use custom font
+        auto_adjust = font_size is None
+        super().__init__(time_txt, size, text_color=text_color, background_color=background_color, auto_adjust_font=auto_adjust)
+        
+        # Override font size if specified
+        if font_size is not None:
+            self.font_path = os.path.join(RESOURCES_DIR, "fonts/MerriweatherSans-VariableFont_wght.ttf")
+            try:
+                self.font = ImageFont.truetype(self.font_path, font_size)
+            except:
+                self.font = ImageFont.load_default()
 
     def update(self):
         """

@@ -105,7 +105,11 @@ class DashboardGenerator:
                     decreasing_line_color=dec_col,
                 )
             elif widget_type == "date_text":
-                widget = DateTimeWidget(size, text_color=text_color, background_color=background_color)
+                # Get font_size from data if provided, otherwise use auto-adjust
+                date_font_size = None
+                if "data" in widget_data and "font_size" in widget_data["data"]:
+                    date_font_size = widget_data["data"]["font_size"]
+                widget = DateTimeWidget(size, text_color=text_color, background_color=background_color, font_size=date_font_size)
             elif widget_type == "pool_info_table":
                 widget = PoolInfoTable(
                     size,
