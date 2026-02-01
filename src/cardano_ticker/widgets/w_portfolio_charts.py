@@ -90,6 +90,19 @@ class PortfolioSummaryWidget(AbstractWidget):
         COLOR_BLUE = (0, 0, 255)
         COLOR_RED = (255, 0, 0)
         COLOR_ORANGE = (255, 128, 0)
+        COLOR_WHITE = (255, 255, 255)
+        
+        # Determine if we're in dark mode (black background)
+        # Check both string and RGB values
+        bg_color_str = str(self.background_color).lower()
+        bg_color_rgb = self._convert_color(self.background_color)
+        is_dark_mode = (bg_color_str == "black" or 
+                       bg_color_rgb == (0, 0, 0) or 
+                       bg_color_rgb[:3] == (0, 0, 0))
+        
+        # Use white for BTC price and EUR value in dark mode, blue in light mode
+        btc_price_color = COLOR_WHITE if is_dark_mode else COLOR_BLUE
+        eur_value_color = COLOR_WHITE if is_dark_mode else COLOR_BLUE
 
         # Calculate BTC value
         btc_value = self.total_value / self.btc_price if self.btc_price > 0 else 0
@@ -135,7 +148,7 @@ class PortfolioSummaryWidget(AbstractWidget):
 
         # Row 1, Column 1: BTC Price
         draw.text((padding_x, label_y_offset), "BTC Price", fill=COLOR_BLACK, font=font_label)
-        draw.text((padding_x, value_y_offset), btc_price_str, fill=COLOR_BLUE, font=font_price)
+        draw.text((padding_x, value_y_offset), btc_price_str, fill=btc_price_color, font=font_price)
 
         # Row 1, Column 2: Portfolio Value (BTC)
         draw.text((col2_x + padding_x, label_y_offset), "In BTC", fill=COLOR_BLACK, font=font_label)
@@ -151,7 +164,7 @@ class PortfolioSummaryWidget(AbstractWidget):
         # Row 2, Column 2: Portfolio Value in EUR (only if available)
         if self.eur_value is not None:
             draw.text((col2_x + padding_x, row2_y + label_y_offset), "In EUR", fill=COLOR_BLACK, font=font_label)
-            draw.text((col2_x + padding_x, row2_y + value_y_offset), eur_value_str, fill=COLOR_BLUE, font=font_eur)
+            draw.text((col2_x + padding_x, row2_y + value_y_offset), eur_value_str, fill=eur_value_color, font=font_eur)
 
         # Draw separating lines
         draw.line([(0, row_height), (self.width, row_height)], fill=COLOR_BLACK, width=1)
