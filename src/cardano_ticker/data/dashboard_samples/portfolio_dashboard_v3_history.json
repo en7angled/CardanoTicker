@@ -1,0 +1,62 @@
+{
+    "canvas_size": [640, 400],
+    "background_color": "white",
+    "dashboard": [
+        {
+            "type": "date_text",
+            "position": [0.70, 0.05],
+            "size": [0.30, 0.10],
+            "text_color": "black",
+            "background_color": "white",
+            "data": {
+                "font_size": 24
+            }
+        },
+        {
+            "type": "portfolio_summary",
+            "position": [0.0, 0.05],
+            "size": [0.70, 0.28],
+            "text_color": "black",
+            "background_color": "white",
+            "data": {
+                "font_size": 38,
+                "api_url": "https://crypto-portofolio.com",
+                "portfolio_id": 1,
+                "api_key": "tk_2052ff9b7c45b2525a15bd4163a6bf5e0c7a1725ea078c9ad6fb16d9f26f0b85"
+            }
+        },
+        {
+            "type": "allocation_donut_chart",
+            "position": [0.0, 0.35],
+            "size": [0.43, 0.63],
+            "text_color": "black",
+            "background_color": "white",
+            "data": {
+                "font_size": 14,
+                "hole_ratio": 0.5,
+                "show_legend": true,
+                "title": "Allocation",
+                "hide_value": true,
+                "api_url": "https://crypto-portofolio.com",
+                "portfolio_id": 1,
+                "api_key": "tk_2052ff9b7c45b2525a15bd4163a6bf5e0c7a1725ea078c9ad6fb16d9f26f0b85"
+            }
+        },
+        {
+            "type": "portfolio_value_chart",
+            "position": [0.44, 0.35],
+            "size": [0.55, 0.63],
+            "text_color": "black",
+            "background_color": "white",
+            "data": {
+                "font_size": 10,
+                "title": "Portfolio (7d)",
+                "line_color": "#00ff00",
+                "days": 7,
+                "api_url": "https://crypto-portofolio.com",
+                "portfolio_id": 1,
+                "api_key": "tk_2052ff9b7c45b2525a15bd4163a6bf5e0c7a1725ea078c9ad6fb16d9f26f0b85"
+            }
+        }
+    ]
+}

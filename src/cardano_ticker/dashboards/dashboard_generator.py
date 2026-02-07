@@ -25,6 +25,7 @@ from cardano_ticker.widgets.w_pool_history import AdaPoolHistWidget
 from cardano_ticker.widgets.w_portfolio_charts import (
     AllocationDonutChart,
     PortfolioSummaryWidget,
+    PortfolioValueChart,
     TreemapWidget,
 )
 from cardano_ticker.data_fetcher.portfolio_fetcher import PortfolioDataFetcher
@@ -292,6 +293,33 @@ class DashboardGenerator:
                     title=title,
                     padding=padding,
                     show_7d=show_7d,
+                )
+            elif widget_type == "portfolio_value_chart":
+                # Portfolio value over time line chart
+                api_url = widget_data["data"].get("api_url", None)
+                portfolio_id = widget_data["data"].get("portfolio_id", 1)
+                api_key = widget_data["data"].get("api_key", None)
+                title = widget_data["data"].get("title", None)
+                line_color = widget_data["data"].get("line_color", "#00ff00")
+                days = widget_data["data"].get("days", 7)
+
+                portfolio_fetcher = None
+                if api_url and api_key:
+                    portfolio_fetcher = PortfolioDataFetcher(
+                        api_base_url=api_url,
+                        portfolio_id=portfolio_id,
+                        api_key=api_key
+                    )
+
+                widget = PortfolioValueChart(
+                    size,
+                    portfolio_fetcher=portfolio_fetcher,
+                    background_color=background_color,
+                    text_color=text_color,
+                    line_color=line_color,
+                    font_size=font_size,
+                    title=title,
+                    days=days,
                 )
             else:
                 raise ValueError(f"Widget type {widget_type} not found")

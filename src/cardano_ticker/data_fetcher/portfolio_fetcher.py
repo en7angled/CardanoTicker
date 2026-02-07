@@ -353,6 +353,39 @@ class PortfolioDataFetcher:
         self._cached_eur_rate = None
         return None
 
+    def fetch_portfolio_history(self, days: int = 7) -> List[Tuple[str, float]]:
+        """
+        Fetch historical daily portfolio values from the ticker API.
+
+        Args:
+            days: Number of days of history to fetch (default 7)
+
+        Returns:
+            List of (date_string, total_value_usd) tuples, sorted by date ascending.
+            Returns empty list if fetch fails.
+        """
+        if not self.api_base_url or not self.api_key:
+            logging.warning("API URL or API key not configured for portfolio history")
+            return []
+
+        try:
+            url = f"{self.api_base_url}/api/ticker/portfolio/history"
+            params = {
+                'portfolioId': self.portfolio_id,
+                'days': days,
+            }
+            headers = {
+                'X-API-Key': self.api_key
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=15)
+            response.raise_for_status()
+            data = response.json()
+            history = data.get('history', [])
+            return [(entry['date'], entry['totalValue']) for entry in history]
+        except Exception as e:
+            logging.error(f"Failed to fetch portfolio history: {e}")
+            return []
+
     def get_allocation_data(self, refresh: bool = False) -> List[Tuple[str, float, str]]:
         """
         Get allocation data for pie chart.

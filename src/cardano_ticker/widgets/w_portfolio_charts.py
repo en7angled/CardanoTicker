@@ -635,3 +635,121 @@ class TreemapWidget(AbstractWidget):
         x = (self.width - text_width) // 2
         y = (self.height - text_height) // 2
         draw.text((x, y), text, fill=EINK_BLACK, font=font)
+
+
+class PortfolioValueChart(AbstractWidget):
+    """
+    Line chart showing portfolio total USD value over time.
+    Designed for e-ink displays with clear date labels and value axis.
+    """
+
+    def __init__(
+        self,
+        size: Tuple[int, int],
+        portfolio_fetcher: Optional[PortfolioDataFetcher] = None,
+        background_color: str = "white",
+        text_color: str = "black",
+        line_color: str = "#00ff00",
+        font_size: int = 10,
+        title: Optional[str] = None,
+        days: int = 7,
+    ):
+        super().__init__(size, background_color=background_color)
+        self.portfolio_fetcher = portfolio_fetcher
+        self.text_color = self._convert_color(text_color)
+        self.text_color_normalized = self._normalize_color(self.text_color)
+        self.line_color = line_color
+        self.font_size = font_size
+        self.title = title
+        self.days = days
+        self.history_data: List[Tuple[str, float]] = []
+
+    def update(self):
+        """Fetch latest portfolio history data"""
+        if self.portfolio_fetcher:
+            self.history_data = self.portfolio_fetcher.fetch_portfolio_history(days=self.days)
+
+    def render(self):
+        """Render the portfolio value line chart"""
+        if not self.history_data:
+            self._render_empty()
+            return
+
+        import matplotlib.dates as mdates
+        from datetime import datetime
+
+        dates_str, values = zip(*self.history_data)
+        dates = [datetime.strptime(d, "%Y-%m-%d") for d in dates_str]
+
+        plt.rcParams.update({"font.size": self.font_size})
+
+        fig, ax = plt.subplots(figsize=(self.width / 100, self.height / 100))
+
+        bk_color = self._normalize_color(self.background_color)
+        fig.set_facecolor(bk_color)
+        ax.set_facecolor(bk_color)
+
+        # Normalize line color for matplotlib
+        line_color_rgb = self._convert_color(self.line_color)
+        line_color_norm = self._normalize_color(line_color_rgb)
+
+        ax.plot(dates, values, color=line_color_norm, linewidth=2, marker='o', markersize=3)
+        ax.fill_between(dates, values, alpha=0.15, color=line_color_norm)
+
+        # Auto-scale Y-axis around actual data with some padding
+        min_val = min(values)
+        max_val = max(values)
+        value_range = max_val - min_val
+        padding = value_range * 0.15 if value_range > 0 else max_val * 0.05
+        ax.set_ylim(min_val - padding, max_val + padding)
+
+        # Format axes
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %d"))
+        ax.tick_params(axis='x', colors=self.text_color_normalized, labelsize=self.font_size - 1)
+        ax.tick_params(axis='y', colors=self.text_color_normalized, labelsize=self.font_size - 1)
+
+        # Format Y-axis with dollar values (use K suffix for large values)
+        def format_value(x, _):
+            if x >= 1000:
+                return f'${x / 1000:.1f}K'
+            return f'${x:,.0f}'
+        ax.yaxis.set_major_formatter(plt.FuncFormatter(format_value))
+
+        ax.grid(color=self.text_color_normalized, linestyle='--', linewidth=0.5, alpha=0.3)
+
+        # Spine colors
+        for spine in ax.spines.values():
+            spine.set_color(self.text_color_normalized)
+
+        if self.title:
+            ax.set_title(self.title, fontsize=self.font_size + 2, fontweight='bold',
+                         color=self.text_color_normalized, pad=5)
+
+        fig.autofmt_xdate(rotation=45, ha='right')
+        fig.tight_layout()
+
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', facecolor=bk_color, dpi=100)
+        buf.seek(0)
+        self._canvas = Image.open(buf).convert('RGBA')
+        buf.close()
+        plt.close(fig)
+
+    def _render_empty(self):
+        """Render empty state"""
+        self._canvas = Image.new('RGBA', self.resolution, self.background_color)
+        draw = ImageDraw.Draw(self._canvas)
+        font_path = os.path.join(RESOURCES_DIR, "fonts/DejaVuSans.ttf")
+        try:
+            font = ImageFont.truetype(font_path, self.font_size)
+        except:
+            font = ImageFont.load_default()
+
+        EINK_BLACK = (70, 70, 70)
+        text = "No history data"
+        bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        x = (self.width - text_width) // 2
+        y = (self.height - text_height) // 2
+        draw.text((x, y), text, fill=EINK_BLACK, font=font)
